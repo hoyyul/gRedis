@@ -1,1 +1,1 @@
-# GoTinyRedis
+# gRedis
