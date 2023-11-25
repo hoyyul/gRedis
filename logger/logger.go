@@ -28,99 +28,99 @@ var (
 )
 
 var (
-	LogLevelTable = []string{"debug", "info", "warning", "panic", "error"}
-	LogConf       *LogConfig
-	LogMu         sync.Mutex
-	Logger        *log.Logger
-	Prefix        string = ""
+	logLevelTable = []string{"debug", "info", "warning", "panic", "error"}
+	logConf       *LogConfig
+	logMu         sync.Mutex
+	logger        *log.Logger
+	prefix        string = ""
 )
 
 func Init(config *config.Config) {
-	LogConf = &LogConfig{
+	logConf = &LogConfig{
 		Path:     config.LogDir,
 		Name:     "log",
 		LogLevel: INFO,
 	}
 
-	for i := range LogLevelTable {
-		if LogLevelTable[i] == config.LogLevel {
-			LogConf.LogLevel = LogLevel(i)
+	for i := range logLevelTable {
+		if logLevelTable[i] == config.LogLevel {
+			logConf.LogLevel = LogLevel(i)
 			break
 		}
 	}
 
-	if _, err := os.Stat(LogConf.Path); err != nil {
-		if err := os.Mkdir(LogConf.Path, 0755); err != nil {
+	if _, err := os.Stat(logConf.Path); err != nil {
+		if err := os.Mkdir(logConf.Path, 0755); err != nil {
 			log.Panic("Failed to create log dir")
 		}
 	}
 
-	fileName := path.Join(LogConf.Path, LogConf.Name)
+	fileName := path.Join(logConf.Path, logConf.Name)
 	logFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		log.Panic("Failed to create log log file")
 	}
 
 	writer := io.MultiWriter(logFile, os.Stdout)
-	Logger = log.New(writer, Prefix, log.LstdFlags)
+	logger = log.New(writer, prefix, log.LstdFlags)
 }
 
 func setPrefix(level LogLevel) {
 	_, file, line, ok := runtime.Caller(1)
 	if ok {
-		Prefix = fmt.Sprintf("[%s][%s:%d]", LogLevelTable[level], file, line)
+		prefix = fmt.Sprintf("[%s][%s:%d]", logLevelTable[level], file, line)
 	} else {
-		Prefix = fmt.Sprintf("[%s]", LogLevelTable[level])
+		prefix = fmt.Sprintf("[%s]", logLevelTable[level])
 	}
-	Logger.SetPrefix(Prefix)
+	logger.SetPrefix(prefix)
 }
 
 func Debug(v any) {
-	if DEBUG < LogConf.LogLevel {
+	if DEBUG < logConf.LogLevel {
 		return
 	}
-	LogMu.Lock()
-	defer LogMu.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
 	setPrefix(DEBUG)
-	Logger.Println(v)
+	logger.Println(v)
 }
 
 func Info(v any) {
-	if INFO < LogConf.LogLevel {
+	if INFO < logConf.LogLevel {
 		return
 	}
-	LogMu.Lock()
-	defer LogMu.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
 	setPrefix(INFO)
-	Logger.Println(v)
+	logger.Println(v)
 }
 
 func Warning(v any) {
-	if WARNING < LogConf.LogLevel {
+	if WARNING < logConf.LogLevel {
 		return
 	}
-	LogMu.Lock()
-	defer LogMu.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
 	setPrefix(WARNING)
-	Logger.Println(v)
+	logger.Println(v)
 }
 
 func Panic(v any) {
-	if PANIC < LogConf.LogLevel {
+	if PANIC < logConf.LogLevel {
 		return
 	}
-	LogMu.Lock()
-	defer LogMu.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
 	setPrefix(PANIC)
-	Logger.Println(v)
+	logger.Println(v)
 }
 
 func Error(v any) {
-	if ERROR < LogConf.LogLevel {
+	if ERROR < logConf.LogLevel {
 		return
 	}
-	LogMu.Lock()
-	defer LogMu.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
 	setPrefix(ERROR)
-	Logger.Println(v)
+	logger.Println(v)
 }
