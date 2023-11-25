@@ -96,7 +96,7 @@ func (conf *Config) ParseConfFile() error {
 		case "logdir":
 			conf.LogDir = argvs[1]
 		case "loglever":
-			conf.LogLevel = argvs[1]
+			conf.LogLevel = strings.ToLower(argvs[1])
 		case "dbnum":
 			conf.DbNum, err = strconv.Atoi(argvs[1])
 			if err != nil {
