@@ -32,13 +32,13 @@ type Config struct {
 	DbNum      int
 }
 
-func initFlag() {
-	flag.StringVar(&(Conf.ConfigFile), "config", "", "Select a config file")
-	flag.StringVar(&(Conf.Host), "host", defaultHost, "Bind a server host")
-	flag.IntVar(&(Conf.Port), "port", defaultPort, "Bind a server port")
-	flag.StringVar(&(Conf.LogDir), "logdir", defaultLogDir, "Set log directory")
-	flag.StringVar(&(Conf.LogLevel), "loglevel", defaultLogLevel, "Set log level")
-	flag.IntVar(&(Conf.DbNum), "dbnum", defalutDbNum, "Set database number")
+func initFlag(conf *Config) {
+	flag.StringVar(&(conf.ConfigFile), "config", "", "Select a config file")
+	flag.StringVar(&(conf.Host), "host", defaultHost, "Bind a server host")
+	flag.IntVar(&(conf.Port), "port", defaultPort, "Bind a server port")
+	flag.StringVar(&(conf.LogDir), "logdir", defaultLogDir, "Set log directory")
+	flag.StringVar(&(conf.LogLevel), "loglevel", defaultLogLevel, "Set log level")
+	flag.IntVar(&(conf.DbNum), "dbnum", defalutDbNum, "Set database number")
 }
 
 func Init() {
@@ -50,13 +50,13 @@ func Init() {
 		DbNum:    defalutDbNum,
 	}
 
-	initFlag()
+	initFlag(_conf)
 	flag.Parse()
 
 	if ip := net.ParseIP(_conf.Host); ip == nil {
 		log.Panic(errors.New("given host invaild"))
 	}
-	if Conf.ConfigFile != "" {
+	if _conf.ConfigFile != "" {
 		err := _conf.ParseConfFile()
 		log.Panic(err)
 	}
@@ -82,6 +82,10 @@ func (conf *Config) ParseConfFile() error {
 
 		argvs := strings.Fields(line)
 
+		if len(argvs) == 0 {
+			continue
+		}
+
 		switch argvs[0] {
 		case "host":
 			if ip := net.ParseIP(argvs[1]); ip == nil {
@@ -95,7 +99,7 @@ func (conf *Config) ParseConfFile() error {
 			}
 		case "logdir":
 			conf.LogDir = argvs[1]
-		case "loglever":
+		case "loglevel":
 			conf.LogLevel = strings.ToLower(argvs[1])
 		case "dbnum":
 			conf.DbNum, err = strconv.Atoi(argvs[1])

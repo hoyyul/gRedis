@@ -61,7 +61,7 @@ func Init(config *config.Config) {
 		log.Panic("Failed to create log log file")
 	}
 
-	writer := io.MultiWriter(logFile, os.Stdout)
+	writer := io.MultiWriter(logFile, os.Stdout) // bufio是包装后的io，读写推荐用bufio
 	logger = log.New(writer, prefix, log.LstdFlags)
 }
 
@@ -75,7 +75,7 @@ func setPrefix(level LogLevel) {
 	logger.SetPrefix(prefix)
 }
 
-func Debug(v any) {
+func Debug(v ...any) {
 	if DEBUG < logConf.LogLevel {
 		return
 	}
@@ -85,7 +85,7 @@ func Debug(v any) {
 	logger.Println(v)
 }
 
-func Info(v any) {
+func Info(v ...any) {
 	if INFO < logConf.LogLevel {
 		return
 	}
@@ -95,7 +95,7 @@ func Info(v any) {
 	logger.Println(v)
 }
 
-func Warning(v any) {
+func Warning(v ...any) {
 	if WARNING < logConf.LogLevel {
 		return
 	}
@@ -105,7 +105,7 @@ func Warning(v any) {
 	logger.Println(v)
 }
 
-func Panic(v any) {
+func Panic(v ...any) {
 	if PANIC < logConf.LogLevel {
 		return
 	}
@@ -115,7 +115,7 @@ func Panic(v any) {
 	logger.Println(v)
 }
 
-func Error(v any) {
+func Error(v ...any) {
 	if ERROR < logConf.LogLevel {
 		return
 	}
