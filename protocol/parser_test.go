@@ -1,10 +1,47 @@
 package protocol
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"testing"
 )
+
+func TestReadLine(t *testing.T) {
+	b := []byte("+OK\r\n:-2\r\n")
+	ioReader := bytes.NewReader(b)
+	bufioReader := bufio.NewReader(ioReader)
+	buf := &readBuffer{}
+
+	// simple message
+	for i := 0; ; i++ {
+		msg, err := readline(bufioReader, buf)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			t.Error("Stream error")
+		}
+		if !bytes.Equal(msg, b[i*5:(i+1)*5]) {
+			t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", msg, b[i*5:(i+1)*5]))
+		}
+	}
+
+	// bulk string message
+	buf.stringLen = 7
+	buf.multiLine = true
+	b = []byte("1\r\n2\n34\r\n")
+	ioReader = bytes.NewReader(b)
+	bufioReader = bufio.NewReader(ioReader)
+	msg, err := readline(bufioReader, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	if !bytes.Equal(msg, b) {
+		t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", msg, b))
+	}
+}
 
 func TestParseSingleLine(t *testing.T) {
 	msg1 := []byte("+OK\r\n")
@@ -13,19 +50,19 @@ func TestParseSingleLine(t *testing.T) {
 	msg4 := []byte(":-20\r\n")
 
 	resp1, err := parseSingleLine(msg1)
-	if string(resp1.GetBytesData()) != "OK" || err != nil {
+	if !bytes.Equal(resp1.GetBytesData(), []byte("OK")) || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg1)))
 	}
 	resp2, err := parseSingleLine(msg2)
-	if string(resp2.GetBytesData()) != "Error message" || err != nil {
+	if !bytes.Equal(resp2.GetBytesData(), []byte("Error message")) || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg2)))
 	}
 	resp3, err := parseSingleLine(msg3)
-	if string(resp3.GetBytesData()) != "1000" || err != nil {
+	if !bytes.Equal(resp3.GetBytesData(), []byte("1000")) || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg3)))
 	}
 	resp4, err := parseSingleLine(msg4)
-	if string(resp4.GetBytesData()) != "-20" || err != nil {
+	if !bytes.Equal(resp4.GetBytesData(), []byte("-20")) || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg4)))
 	}
 }
