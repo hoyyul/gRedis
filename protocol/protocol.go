@@ -22,6 +22,7 @@ type RedisData interface {
 	ToRedisFormat() []byte
 }
 
+// non-binary strings
 type SimpleString struct {
 	data string
 }
@@ -32,6 +33,11 @@ type SimpleError struct {
 
 type Integer struct {
 	data int64
+}
+
+// binary strings
+type BulkString struct {
+	data []byte
 }
 
 // SimpleString
@@ -89,4 +95,23 @@ func (i *Integer) GetBytesData() []byte {
 
 func (i *Integer) ToRedisFormat() []byte {
 	return []byte(fmt.Sprintf(":%s%s", strconv.FormatInt(i.data, 10), CRLF)) // [<+|->]<value>\r\n
+}
+
+// Bulk String
+func NewBulkString(data []byte) *BulkString {
+	return &BulkString{
+		data: data,
+	}
+}
+
+func (bs *BulkString) GetData() []byte {
+	return bs.data
+}
+
+func (bs *BulkString) GetBytesData() []byte {
+	return bs.data
+}
+
+func (bs *BulkString) ToRedisFormat() []byte {
+	return bs.data
 }
