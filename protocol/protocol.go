@@ -12,8 +12,6 @@ import (
 )
 
 var (
-	CR   string = "\r"
-	LF   string = "\n"
 	CRLF string = "\r\n"
 )
 
@@ -24,20 +22,24 @@ type RedisData interface {
 
 // non-binary strings
 type SimpleString struct {
-	data string
+	data string // "OK"
 }
 
 type SimpleError struct {
-	data string
+	data string // "ERROR"
 }
 
 type Integer struct {
-	data int64
+	data int64 // -15, 20
 }
 
 // binary strings
 type BulkString struct {
-	data []byte
+	data []byte // bytes("OK")
+}
+
+type Array struct {
+	data []RedisData // [SimpleString("OK"), SimpleError("ERROR"), Integer(-15), BulkString(bytes("OK"))]
 }
 
 // SimpleString
@@ -114,4 +116,36 @@ func (bs *BulkString) GetBytesData() []byte {
 
 func (bs *BulkString) ToRedisFormat() []byte {
 	return bs.data
+}
+
+// Array
+func NewArray(data []RedisData) *Array {
+	return &Array{
+		data: data,
+	}
+}
+
+func (a *Array) GetData() []RedisData {
+	return a.data
+}
+
+func (a *Array) GetBytesData() []byte {
+	arr := make([]byte, 0, len(a.data))
+	for i := range a.data {
+		arr = append(arr, a.data[i].GetBytesData()...)
+	}
+	return arr
+}
+
+func (a *Array) ToRedisFormat() []byte {
+	if a.data == nil {
+		return []byte("*-1\r\n")
+	}
+
+	arr := []byte(fmt.Sprintf("*%d%s", len(a.data), CRLF))
+
+	for i := range a.data {
+		arr = append(arr, a.data[i].ToRedisFormat()...)
+	}
+	return arr
 }

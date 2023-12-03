@@ -15,6 +15,9 @@ type RedisResp struct {
 type readBuffer struct {
 	stringLen int64 // bulk string
 	multiLine bool
+	arrayLen  int64
+	inArray   bool
+	arrayData *Array
 }
 
 func ParseStream(reader io.Reader) <-chan *RedisResp {
@@ -28,9 +31,10 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 	buf := &readBuffer{}
 
 	for {
-		var resp RedisData
+		var data RedisData
 		msg, err := readline(streamReader, buf)
 		if err != nil {
+			// read all and close channel
 			if err == io.EOF {
 				ch <- &RedisResp{Err: err}
 				close(ch)
@@ -42,12 +46,12 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 			continue
 		}
 
-		// simple msg or bulk string msg
+		// make redis data
 		if buf.multiLine {
 			// bulk string msg
+			data, err = parseBulkString(msg)
 			buf.multiLine = false
 			buf.stringLen = 0
-			resp, err = parseBulkString(msg)
 		} else {
 			// bulk string header
 			if msg[0] == '$' {
@@ -57,16 +61,36 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 					logger.Error("Stream Error: ", err)
 					ch <- &RedisResp{Err: err}
 					buf = &readBuffer{}
-				} else if buf.stringLen == -1 { // null bulk string
-					resp = NewBulkString(nil)
-					ch <- &RedisResp{Data: resp}
+				} else {
+					if buf.stringLen == -1 { // null bulk string
+						ch <- &RedisResp{Data: NewBulkString(nil)}
+					}
+				}
+				continue
+			}
+
+			// array
+			if msg[0] == '*' {
+				err = parseArrayHeader(msg, buf)
+
+				if err != nil {
+					logger.Error("Stream Error: ", err)
+					ch <- &RedisResp{Err: err}
+					buf = &readBuffer{}
+				} else {
+					if buf.arrayLen == -1 { // null bulk string
+						buf.arrayLen = 0
+						ch <- &RedisResp{Data: NewArray(nil)}
+					} else if buf.arrayLen == 0 {
+						ch <- &RedisResp{Data: NewArray([]RedisData{})}
+					}
 				}
 
 				continue
 			}
 
 			// simple message
-			resp, err = parseSingleLine(msg)
+			data, err = parseSingleLine(msg)
 		}
 
 		if err != nil {
@@ -75,8 +99,9 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 			buf = &readBuffer{}
 			continue
 		}
-		ch <- &RedisResp{Data: resp}
 
+		// send redis data
+		ch <- &RedisResp{Data: data}
 	}
 }
 
@@ -110,40 +135,33 @@ func readline(reader *bufio.Reader, buf *readBuffer) (msg []byte, err error) {
 }
 
 func parseSingleLine(msg []byte) (RedisData, error) {
-	if len(msg) < 3 {
-		return nil, errors.New("Protocol error: format invalid")
-	}
-
 	msgType := msg[0]
-	msgData := string(msg[1 : len(msg)-2]) // discard "\r\n"
-	var resp RedisData
+	msgData := string(msg[1 : len(msg)-2]) // discard flag and "\r\n"
+	var data RedisData
 
 	switch msgType {
 	case '+':
-		resp = NewSimpleString(msgData)
+		data = NewSimpleString(msgData)
 	case '-':
-		resp = NewSimpleError(msgData)
+		data = NewSimpleError(msgData)
 	case ':':
 		integerData, err := strconv.ParseInt(msgData, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		resp = NewInteger(integerData)
+		data = NewInteger(integerData)
+	default:
+		// not valid?
 	}
-	if resp == nil {
+	if data == nil {
 		return nil, errors.New("Protocol error: " + string(msg))
 	}
 
-	return resp, nil
+	return data, nil
 }
 
 func parseBulkStringHeader(msg []byte, buf *readBuffer) error {
-	// $5\r\n
-	if len(msg) < 3 {
-		return errors.New("Protocol error: format invalid")
-	}
-
-	// discard "\r\n"
+	// read header; discard flag and "\r\n"
 	stringLen, err := strconv.ParseInt(string(msg[1:len(msg)-2]), 10, 64)
 	if stringLen < -1 || err != nil {
 		return errors.New("Protocol error: " + string(msg))
@@ -152,22 +170,32 @@ func parseBulkStringHeader(msg []byte, buf *readBuffer) error {
 	if stringLen > -1 {
 		buf.multiLine = true
 		buf.stringLen = stringLen
-	} else { // stringLen == 1 means null string.
-		buf.multiLine = false
-		buf.stringLen = 0
 	}
-
 	return nil
 }
 
 func parseBulkString(msg []byte) (RedisData, error) {
-	if len(msg) < 2 {
-		return nil, errors.New("Protocol error: format invalid")
+	// read data; discard "\r\n"
+	msgData := msg[:len(msg)-2]
+	data := NewBulkString(msgData)
+
+	return data, nil
+}
+
+func parseArrayHeader(msg []byte, buf *readBuffer) error {
+	// read header; discard flag and "\r\n"
+	arrayLen, err := strconv.ParseInt(string(msg[1:len(msg)-2]), 10, 64)
+	if arrayLen < -1 || err != nil {
+		return errors.New("Protocol error: " + string(msg))
 	}
 
-	// discard "\r\n"
-	msgData := msg[:len(msg)-2]
-	resp := NewBulkString(msgData)
+	// len == -1 or len == 0 or len > 0
+	buf.arrayLen = arrayLen
 
-	return resp, nil
+	// only for len > 0
+	if arrayLen > 0 {
+		buf.inArray = true
+		buf.arrayData = NewArray([]RedisData{})
+	}
+	return nil
 }
