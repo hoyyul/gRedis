@@ -8,6 +8,140 @@ import (
 	"testing"
 )
 
+func TestParseStream(t *testing.T) {
+	var b []byte
+	var reader io.Reader
+	var ch <-chan *RedisResp
+
+	// Null elements in array
+	b = []byte("*3\r\n$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n")
+	reader = bytes.NewReader(b)
+	ch = ParseStream(reader)
+	for resp := range ch {
+		if resp.Err != nil {
+			if resp.Err != io.EOF {
+				t.Error(resp.Err)
+			}
+			break
+		}
+
+		arr := resp.Data.(*Array).GetData()
+		if !bytes.Equal(arr[0].(*BulkString).GetData(), []byte("hello")) {
+			t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr[0].GetBytesData(), []byte("hello")))
+		}
+		if arr[1].(*BulkString).GetData() != nil {
+			t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr[1].GetBytesData(), nil))
+		}
+		if !bytes.Equal(arr[2].(*BulkString).GetData(), []byte("world")) {
+			t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr[2].GetBytesData(), []byte("world")))
+		}
+	}
+
+	// Null array
+	b = []byte("*-1\r\n")
+	reader = bytes.NewReader(b)
+	ch = ParseStream(reader)
+	for resp := range ch {
+		if resp.Err != nil {
+			if resp.Err != io.EOF {
+				t.Error(resp.Err)
+			}
+			break
+		}
+
+		arr := resp.Data.(*Array)
+		if arr.GetData() != nil || !bytes.Equal(arr.ToRedisFormat(), []byte("*-1\r\n")) {
+			t.Error("Stream error.")
+		}
+	}
+
+	// Empty array
+	b = []byte("*0\r\n")
+	reader = bytes.NewReader(b)
+	ch = ParseStream(reader)
+	for resp := range ch {
+		if resp.Err != nil {
+			if resp.Err != io.EOF {
+				t.Error(resp.Err)
+			}
+			break
+		}
+
+		arr := resp.Data.(*Array)
+		if len(arr.GetData()) != 0 || !bytes.Equal(arr.ToRedisFormat(), []byte("*0\r\n")) {
+			t.Error("Stream error.")
+		}
+	}
+
+	// Bulk string
+	b = []byte("$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n")
+	reader = bytes.NewReader(b)
+	ch = ParseStream(reader)
+	i := 0
+	for resp := range ch {
+		if resp.Err != nil {
+			if resp.Err != io.EOF {
+				t.Error(resp.Err)
+			}
+			break
+		}
+
+		bs := resp.Data.(*BulkString)
+		if i == 0 {
+			if !bytes.Equal(bs.GetData(), []byte("hello")) {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", bs.GetData(), []byte("hello")))
+			}
+		}
+		if i == 1 {
+			if bs.GetData() != nil {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", bs.GetData(), nil))
+			}
+		}
+		if i == 2 {
+			if !bytes.Equal(bs.GetData(), []byte("world")) {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", bs.GetData(), []byte("world")))
+			}
+		}
+		i++
+	}
+
+	// Nested Array
+	b = []byte("*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Hello\r\n-World\r\n") // send [1 2 3] and [Hello World] respectively
+	reader = bytes.NewReader(b)
+	ch = ParseStream(reader)
+	k := 0
+	for resp := range ch {
+		if resp.Err != nil {
+			if resp.Err != io.EOF {
+				t.Error(resp.Err)
+			}
+			break
+		}
+
+		arr := resp.Data.(*Array)
+		if k == 0 {
+			if arr.GetData()[0].(*Integer).GetData() != 1 {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr.GetData()[0].(*Integer).GetData(), 1))
+			}
+			if arr.GetData()[1].(*Integer).GetData() != 2 {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr.GetData()[1].(*Integer).GetData(), 2))
+			}
+			if arr.GetData()[2].(*Integer).GetData() != 3 {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr.GetData()[2].(*Integer).GetData(), 3))
+			}
+		}
+		if k == 1 {
+			if arr.GetData()[0].(*SimpleString).GetData() != "Hello" {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr.GetData()[0].(*SimpleString).GetData(), "Hello"))
+			}
+			if arr.GetData()[1].(*SimpleError).GetData() != "World" {
+				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr.GetData()[1].(*SimpleError).GetData(), "World"))
+			}
+		}
+		k++
+	}
+}
+
 func TestReadLine(t *testing.T) {
 	b := []byte("+OK\r\n:-2\r\n")
 	ioReader := bytes.NewReader(b)
@@ -54,19 +188,19 @@ func TestParseSingleLine(t *testing.T) {
 	i2 := NewInteger(-20)
 
 	data1, err := parseSingleLine(msg1)
-	if data1.(*SimpleString).data != ss.data || err != nil {
+	if data1.(*SimpleString).Data != ss.Data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg1)))
 	}
 	data2, err := parseSingleLine(msg2)
-	if data2.(*SimpleError).data != se.data || err != nil {
+	if data2.(*SimpleError).Data != se.Data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg2)))
 	}
 	data3, err := parseSingleLine(msg3)
-	if data3.(*Integer).data != i1.data || err != nil {
+	if data3.(*Integer).Data != i1.Data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg3)))
 	}
 	data4, err := parseSingleLine(msg4)
-	if data4.(*Integer).data != i2.data || err != nil {
+	if data4.(*Integer).Data != i2.Data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg4)))
 	}
 }
@@ -84,7 +218,7 @@ func TestParseBulkStringHeader(t *testing.T) {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg1)))
 	}
 	err = parseBulkStringHeader(msg2, buf2)
-	if buf2.stringLen != 0 || buf2.multiLine || err != nil {
+	if buf2.stringLen != -1 || buf2.multiLine || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg2)))
 	}
 	err = parseBulkStringHeader(msg3, buf3)
@@ -100,18 +234,18 @@ func TestParseBulkString(t *testing.T) {
 	bs2 := NewBulkString([]byte(""))
 
 	data1, err := parseBulkString(msg1)
-	if !bytes.Equal(data1.(*BulkString).data, bs1.data) || err != nil {
-		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data1.(*BulkString).data, bs1.data))
+	if !bytes.Equal(data1.(*BulkString).Data, bs1.Data) || err != nil {
+		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data1.(*BulkString).Data, bs1.Data))
 	}
 	data2, err := parseBulkString(msg2)
-	if !bytes.Equal(data2.(*BulkString).data, bs2.data) || err != nil {
-		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data2.(*BulkString).data, bs2.data))
+	if !bytes.Equal(data2.(*BulkString).Data, bs2.Data) || err != nil {
+		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data2.(*BulkString).Data, bs2.Data))
 	}
 }
 
 func TestParseArrayHeader(t *testing.T) {
 	msg1 := []byte("*0\r\n")
-	msg2 := []byte("*2\r\n")
+	msg2 := []byte("*1\r\n")
 	msg3 := []byte("*-1\r\n")
 	buf1 := &readBuffer{}
 	buf2 := &readBuffer{}
@@ -122,7 +256,7 @@ func TestParseArrayHeader(t *testing.T) {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg1)))
 	}
 	err = parseArrayHeader(msg2, buf2)
-	if buf2.arrayLen != 2 || !buf2.inArray || err != nil {
+	if buf2.arrayLen != 1 || !buf2.inArray || buf2.arrayData == nil || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg2)))
 	}
 	err = parseArrayHeader(msg3, buf3)

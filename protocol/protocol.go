@@ -9,6 +9,7 @@ Redis clients use a protocol called REdis Serialization Protocol (RESP).
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -18,134 +19,174 @@ var (
 type RedisData interface {
 	GetBytesData() []byte
 	ToRedisFormat() []byte
+	String() string
 }
 
 // non-binary strings
 type SimpleString struct {
-	data string // "OK"
+	Data string // "OK"
 }
 
 type SimpleError struct {
-	data string // "ERROR"
+	Data string // "ERROR"
 }
 
 type Integer struct {
-	data int64 // -15, 20
+	Data int64 // -15, 20
 }
 
 // binary strings
 type BulkString struct {
-	data []byte // bytes("OK")
+	Data []byte // bytes("OK")
 }
 
 type Array struct {
-	data []RedisData // [SimpleString("OK"), SimpleError("ERROR"), Integer(-15), BulkString(bytes("OK"))]
+	Data []RedisData // [SimpleString("OK"), SimpleError("ERROR"), Integer(-15), BulkString(bytes("OK"))]
 }
 
 // SimpleString
 func NewSimpleString(data string) *SimpleString {
 	return &SimpleString{
-		data: data,
+		Data: data,
 	}
 }
 
 func (s *SimpleString) GetData() string {
-	return s.data
+	return s.Data
 }
 
 func (s *SimpleString) GetBytesData() []byte {
-	return []byte(s.data)
+	return []byte(s.Data)
 }
 
 func (s *SimpleString) ToRedisFormat() []byte {
-	return []byte(fmt.Sprintf("+%s%s", s.data, CRLF)) // +OK\r\n
+	return []byte(fmt.Sprintf("+%s%s", s.Data, CRLF)) // +OK\r\n
+}
+
+func (s *SimpleString) String() string {
+	return s.Data
 }
 
 // SimpleError
 func NewSimpleError(data string) *SimpleError {
 	return &SimpleError{
-		data: data,
+		Data: data,
 	}
 }
 
 func (e *SimpleError) GetData() string {
-	return e.data
+	return e.Data
 }
 
 func (e *SimpleError) GetBytesData() []byte {
-	return []byte(e.data)
+	return []byte(e.Data)
 }
 
 func (e *SimpleError) ToRedisFormat() []byte {
-	return []byte(fmt.Sprintf("-%s%s", e.data, CRLF)) // -Error message\r\n
+	return []byte(fmt.Sprintf("-%s%s", e.Data, CRLF)) // -Error message\r\n
+}
+
+func (e *SimpleError) String() string {
+	return e.Data
 }
 
 // Integer
 func NewInteger(data int64) *Integer {
 	return &Integer{
-		data: data,
+		Data: data,
 	}
 }
 
 func (i *Integer) GetData() int64 {
-	return i.data
+	return i.Data
 }
 
 func (i *Integer) GetBytesData() []byte {
-	return []byte(strconv.FormatInt(i.data, 10)) // +42 -> "42", -42 -> "-42"
+	return []byte(strconv.FormatInt(i.Data, 10)) // +42 -> "42", -42 -> "-42"
 }
 
 func (i *Integer) ToRedisFormat() []byte {
-	return []byte(fmt.Sprintf(":%s%s", strconv.FormatInt(i.data, 10), CRLF)) // [<+|->]<value>\r\n
+	return []byte(fmt.Sprintf(":%s%s", strconv.FormatInt(i.Data, 10), CRLF)) // [<+|->]<value>\r\n
+}
+
+func (i *Integer) String() string {
+	return strconv.FormatInt(i.Data, 10)
 }
 
 // Bulk String
 func NewBulkString(data []byte) *BulkString {
 	return &BulkString{
-		data: data,
+		Data: data,
 	}
 }
 
 func (bs *BulkString) GetData() []byte {
-	return bs.data
+	return bs.Data
 }
 
 func (bs *BulkString) GetBytesData() []byte {
-	return bs.data
+	return bs.Data
 }
 
 func (bs *BulkString) ToRedisFormat() []byte {
-	return bs.data
+	if bs.Data == nil {
+		return []byte("$-1\r\n")
+	}
+	return []byte("$" + strconv.Itoa(len(bs.Data)) + CRLF + string(bs.Data) + CRLF)
+}
+
+func (bs *BulkString) String() string {
+	return string(bs.Data)
 }
 
 // Array
 func NewArray(data []RedisData) *Array {
 	return &Array{
-		data: data,
+		Data: data,
 	}
 }
 
 func (a *Array) GetData() []RedisData {
-	return a.data
+	return a.Data
 }
 
 func (a *Array) GetBytesData() []byte {
-	arr := make([]byte, 0, len(a.data))
-	for i := range a.data {
-		arr = append(arr, a.data[i].GetBytesData()...)
+	arr := make([]byte, 0, len(a.GetData()))
+	for i := range a.Data {
+		arr = append(arr, a.Data[i].GetBytesData()...)
 	}
 	return arr
 }
 
 func (a *Array) ToRedisFormat() []byte {
-	if a.data == nil {
+	if a.Data == nil {
 		return []byte("*-1\r\n")
 	}
 
-	arr := []byte(fmt.Sprintf("*%d%s", len(a.data), CRLF))
+	arr := []byte(fmt.Sprintf("*%d%s", len(a.Data), CRLF))
 
-	for i := range a.data {
-		arr = append(arr, a.data[i].ToRedisFormat()...)
+	for i := range a.Data {
+		arr = append(arr, a.Data[i].ToRedisFormat()...)
+	}
+	return arr
+}
+
+func (a *Array) String() string {
+	return strings.Join(a.ToStringCommand(), " ")
+}
+
+func (a *Array) ToCommand() [][]byte {
+	arr := make([][]byte, 0, len(a.GetData()))
+	for i := range a.GetData() {
+		arr = append(arr, a.GetData()[i].GetBytesData())
+	}
+	return arr
+}
+
+func (a *Array) ToStringCommand() []string {
+	arr := make([]string, 0, len(a.GetData()))
+	for i := range a.GetData() {
+		arr = append(arr, a.GetData()[i].String())
 	}
 	return arr
 }

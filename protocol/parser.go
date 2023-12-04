@@ -3,6 +3,7 @@ package protocol
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"gRedis/logger"
 	"io"
 	"strconv"
@@ -15,7 +16,7 @@ type RedisResp struct {
 type readBuffer struct {
 	stringLen int64 // bulk string
 	multiLine bool
-	arrayLen  int64
+	arrayLen  int
 	inArray   bool
 	arrayData *Array
 }
@@ -33,6 +34,11 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 	for {
 		var data RedisData
 		msg, err := readline(streamReader, buf)
+		if buf.arrayData != nil {
+			fmt.Println("after readline msg: ", msg, string(msg), buf, buf.arrayData.Data)
+		} else {
+			fmt.Println("after readline msg: ", msg, string(msg), buf)
+		}
 		if err != nil {
 			// read all and close channel
 			if err == io.EOF {
@@ -45,17 +51,26 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 			buf = &readBuffer{}
 			continue
 		}
-
 		// make redis data
 		if buf.multiLine {
 			// bulk string msg
 			data, err = parseBulkString(msg)
 			buf.multiLine = false
 			buf.stringLen = 0
+			if buf.arrayData != nil {
+				fmt.Println("after parseBulkString: ", msg, string(msg), buf, buf.arrayData.Data)
+			} else {
+				fmt.Println("after parseBulkString: ", msg, string(msg), buf)
+			}
 		} else {
 			// bulk string header
 			if msg[0] == '$' {
 				err = parseBulkStringHeader(msg, buf)
+				if buf.arrayData != nil {
+					fmt.Println("after BulkStringHeader: ", msg, string(msg), buf, buf.arrayData.Data)
+				} else {
+					fmt.Println("after BulkStringHeader: ", msg, string(msg), buf)
+				}
 
 				if err != nil {
 					logger.Error("Stream Error: ", err)
@@ -63,7 +78,28 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 					buf = &readBuffer{}
 				} else {
 					if buf.stringLen == -1 { // null bulk string
-						ch <- &RedisResp{Data: NewBulkString(nil)}
+						if buf.inArray { // Null elements in arrays; ["hello",nil,"world"]
+							buf.arrayData.Data = append(buf.arrayData.Data, NewBulkString(nil))
+							if buf.arrayData != nil {
+								fmt.Println("after add data to array: ", msg, string(msg), buf, buf.arrayData.Data)
+							} else {
+								fmt.Println("after add data to array: ", msg, string(msg), buf)
+							}
+							if len(buf.arrayData.Data) == buf.arrayLen {
+								ch <- &RedisResp{Data: buf.arrayData}
+								buf.inArray = false
+								buf.arrayLen = 0
+								buf.arrayData = nil
+								if buf.arrayData != nil {
+									fmt.Println("after send data: ", msg, string(msg), buf, buf.arrayData.Data)
+								} else {
+									fmt.Println("after send data: ", msg, string(msg), buf)
+								}
+							}
+						} else {
+							ch <- &RedisResp{Data: NewBulkString(nil)}
+						}
+						buf.stringLen = 0
 					}
 				}
 				continue
@@ -72,20 +108,28 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 			// array
 			if msg[0] == '*' {
 				err = parseArrayHeader(msg, buf)
-
+				if buf.arrayData != nil {
+					fmt.Println("after array header: ", msg, string(msg), buf, buf.arrayData.Data)
+				} else {
+					fmt.Println("after array header: ", msg, string(msg), buf)
+				}
 				if err != nil {
 					logger.Error("Stream Error: ", err)
 					ch <- &RedisResp{Err: err}
 					buf = &readBuffer{}
 				} else {
 					if buf.arrayLen == -1 { // null bulk string
-						buf.arrayLen = 0
 						ch <- &RedisResp{Data: NewArray(nil)}
+						buf.arrayLen = 0
+						if buf.arrayData != nil {
+							fmt.Println("after send data: ", msg, string(msg), buf, buf.arrayData.Data)
+						} else {
+							fmt.Println("after send data: ", msg, string(msg), buf)
+						}
 					} else if buf.arrayLen == 0 {
 						ch <- &RedisResp{Data: NewArray([]RedisData{})}
 					}
 				}
-
 				continue
 			}
 
@@ -101,7 +145,27 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 		}
 
 		// send redis data
-		ch <- &RedisResp{Data: data}
+		if buf.inArray { // send array data
+			buf.arrayData.Data = append(buf.arrayData.Data, data)
+			if buf.arrayData != nil {
+				fmt.Println("after add data to array: ", msg, string(msg), buf, buf.arrayData.Data)
+			} else {
+				fmt.Println("after add data to array: ", msg, string(msg), buf)
+			}
+			if len(buf.arrayData.Data) == buf.arrayLen {
+				ch <- &RedisResp{Data: buf.arrayData}
+				buf.inArray = false
+				buf.arrayLen = 0
+				buf.arrayData = nil
+				if buf.arrayData != nil {
+					fmt.Println("after send data: ", msg, string(msg), buf, buf.arrayData.Data)
+				} else {
+					fmt.Println("after send data: ", msg, string(msg), buf)
+				}
+			}
+		} else { // send single data
+			ch <- &RedisResp{Data: data}
+		}
 	}
 }
 
@@ -112,8 +176,6 @@ func readline(reader *bufio.Reader, buf *readBuffer) (msg []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-
-		buf.stringLen = 0
 
 		if msg[len(msg)-1] != '\n' || msg[len(msg)-2] != '\r' {
 			return nil, errors.New("Protocol error: stream msg invalid")
@@ -126,8 +188,7 @@ func readline(reader *bufio.Reader, buf *readBuffer) (msg []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-
-		if msg[len(msg)-2] != '\r' {
+		if len(msg) == 0 || msg[len(msg)-2] != '\r' {
 			return nil, errors.New("Protocol error: stream msg invalid")
 		}
 	}
@@ -153,9 +214,6 @@ func parseSingleLine(msg []byte) (RedisData, error) {
 	default:
 		// not valid?
 	}
-	if data == nil {
-		return nil, errors.New("Protocol error: " + string(msg))
-	}
 
 	return data, nil
 }
@@ -167,9 +225,12 @@ func parseBulkStringHeader(msg []byte, buf *readBuffer) error {
 		return errors.New("Protocol error: " + string(msg))
 	}
 
+	// len == -1 or len == 0 or len > 0
+	buf.stringLen = stringLen
+
+	// only for len > -1
 	if stringLen > -1 {
 		buf.multiLine = true
-		buf.stringLen = stringLen
 	}
 	return nil
 }
@@ -190,7 +251,7 @@ func parseArrayHeader(msg []byte, buf *readBuffer) error {
 	}
 
 	// len == -1 or len == 0 or len > 0
-	buf.arrayLen = arrayLen
+	buf.arrayLen = int(arrayLen)
 
 	// only for len > 0
 	if arrayLen > 0 {
