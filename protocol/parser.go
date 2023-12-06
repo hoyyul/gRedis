@@ -63,8 +63,8 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 				} else {
 					if buf.stringLen == -1 { // null bulk string
 						if buf.inArray { // Null elements in arrays; ["hello",nil,"world"]
-							buf.arrayData.Data = append(buf.arrayData.Data, NewBulkString(nil))
-							if len(buf.arrayData.Data) == buf.arrayLen {
+							buf.arrayData.data = append(buf.arrayData.data, NewBulkString(nil))
+							if len(buf.arrayData.data) == buf.arrayLen {
 								ch <- &RedisResp{Data: buf.arrayData}
 								buf.inArray = false
 								buf.arrayLen = 0
@@ -110,8 +110,8 @@ func parse(reader io.Reader, ch chan *RedisResp) {
 
 		// send redis data
 		if buf.inArray { // send array data
-			buf.arrayData.Data = append(buf.arrayData.Data, data)
-			if len(buf.arrayData.Data) == buf.arrayLen {
+			buf.arrayData.data = append(buf.arrayData.data, data)
+			if len(buf.arrayData.data) == buf.arrayLen {
 				ch <- &RedisResp{Data: buf.arrayData}
 				buf.inArray = false
 				buf.arrayLen = 0

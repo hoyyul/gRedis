@@ -24,149 +24,149 @@ type RedisData interface {
 
 // non-binary strings
 type SimpleString struct {
-	Data string // "OK"
+	data string // "OK"
 }
 
 type SimpleError struct {
-	Data string // "ERROR"
+	data string // "ERROR"
 }
 
 type Integer struct {
-	Data int64 // -15, 20
+	data int64 // -15, 20
 }
 
 // binary strings
 type BulkString struct {
-	Data []byte // bytes("OK")
+	data []byte // bytes("OK")
 }
 
 type Array struct {
-	Data []RedisData // [SimpleString("OK"), SimpleError("ERROR"), Integer(-15), BulkString(bytes("OK"))]
+	data []RedisData // [SimpleString("OK"), SimpleError("ERROR"), Integer(-15), BulkString(bytes("OK"))]
 }
 
 // SimpleString
 func NewSimpleString(data string) *SimpleString {
 	return &SimpleString{
-		Data: data,
+		data: data,
 	}
 }
 
 func (s *SimpleString) GetData() string {
-	return s.Data
+	return s.data
 }
 
 func (s *SimpleString) GetBytesData() []byte {
-	return []byte(s.Data)
+	return []byte(s.data)
 }
 
 func (s *SimpleString) ToRedisFormat() []byte {
-	return []byte(fmt.Sprintf("+%s%s", s.Data, CRLF)) // +OK\r\n
+	return []byte(fmt.Sprintf("+%s%s", s.data, CRLF)) // +OK\r\n
 }
 
 func (s *SimpleString) String() string {
-	return s.Data
+	return s.data
 }
 
 // SimpleError
 func NewSimpleError(data string) *SimpleError {
 	return &SimpleError{
-		Data: data,
+		data: data,
 	}
 }
 
 func (e *SimpleError) GetData() string {
-	return e.Data
+	return e.data
 }
 
 func (e *SimpleError) GetBytesData() []byte {
-	return []byte(e.Data)
+	return []byte(e.data)
 }
 
 func (e *SimpleError) ToRedisFormat() []byte {
-	return []byte(fmt.Sprintf("-%s%s", e.Data, CRLF)) // -Error message\r\n
+	return []byte(fmt.Sprintf("-%s%s", e.data, CRLF)) // -Error message\r\n
 }
 
 func (e *SimpleError) String() string {
-	return e.Data
+	return e.data
 }
 
 // Integer
 func NewInteger(data int64) *Integer {
 	return &Integer{
-		Data: data,
+		data: data,
 	}
 }
 
 func (i *Integer) GetData() int64 {
-	return i.Data
+	return i.data
 }
 
 func (i *Integer) GetBytesData() []byte {
-	return []byte(strconv.FormatInt(i.Data, 10)) // +42 -> "42", -42 -> "-42"
+	return []byte(strconv.FormatInt(i.data, 10)) // +42 -> "42", -42 -> "-42"
 }
 
 func (i *Integer) ToRedisFormat() []byte {
-	return []byte(fmt.Sprintf(":%s%s", strconv.FormatInt(i.Data, 10), CRLF)) // [<+|->]<value>\r\n
+	return []byte(fmt.Sprintf(":%s%s", strconv.FormatInt(i.data, 10), CRLF)) // [<+|->]<value>\r\n
 }
 
 func (i *Integer) String() string {
-	return strconv.FormatInt(i.Data, 10)
+	return strconv.FormatInt(i.data, 10)
 }
 
 // Bulk String
 func NewBulkString(data []byte) *BulkString {
 	return &BulkString{
-		Data: data,
+		data: data,
 	}
 }
 
 func (bs *BulkString) GetData() []byte {
-	return bs.Data
+	return bs.data
 }
 
 func (bs *BulkString) GetBytesData() []byte {
-	return bs.Data
+	return bs.data
 }
 
 func (bs *BulkString) ToRedisFormat() []byte {
-	if bs.Data == nil {
+	if bs.data == nil {
 		return []byte("$-1\r\n")
 	}
-	return []byte("$" + strconv.Itoa(len(bs.Data)) + CRLF + string(bs.Data) + CRLF)
+	return []byte("$" + strconv.Itoa(len(bs.data)) + CRLF + string(bs.data) + CRLF)
 }
 
 func (bs *BulkString) String() string {
-	return string(bs.Data)
+	return string(bs.data)
 }
 
 // Array
 func NewArray(data []RedisData) *Array {
 	return &Array{
-		Data: data,
+		data: data,
 	}
 }
 
 func (a *Array) GetData() []RedisData {
-	return a.Data
+	return a.data
 }
 
 func (a *Array) GetBytesData() []byte {
 	arr := make([]byte, 0, len(a.GetData()))
-	for i := range a.Data {
-		arr = append(arr, a.Data[i].GetBytesData()...)
+	for i := range a.data {
+		arr = append(arr, a.data[i].GetBytesData()...)
 	}
 	return arr
 }
 
 func (a *Array) ToRedisFormat() []byte {
-	if a.Data == nil {
+	if a.data == nil {
 		return []byte("*-1\r\n")
 	}
 
-	arr := []byte(fmt.Sprintf("*%d%s", len(a.Data), CRLF))
+	arr := []byte(fmt.Sprintf("*%d%s", len(a.data), CRLF))
 
-	for i := range a.Data {
-		arr = append(arr, a.Data[i].ToRedisFormat()...)
+	for i := range a.data {
+		arr = append(arr, a.data[i].ToRedisFormat()...)
 	}
 	return arr
 }

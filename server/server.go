@@ -23,6 +23,6 @@ func Start(config *config.Config) {
 			logger.Panic(err)
 		}
 
-		go handler.handle(conn)
+		go handler.Handle(conn)
 	}
 }

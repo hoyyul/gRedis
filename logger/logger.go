@@ -60,13 +60,14 @@ func Init(config *config.Config) {
 	if err != nil {
 		log.Panic("Failed to create log log file")
 	}
+	defer logFile.Close()
 
 	writer := io.MultiWriter(logFile, os.Stdout) // bufio是包装后的io，读写推荐用bufio
 	logger = log.New(writer, prefix, log.LstdFlags)
 }
 
 func setPrefix(level LogLevel) {
-	_, file, line, ok := runtime.Caller(1)
+	_, file, line, ok := runtime.Caller(2)
 	if ok {
 		prefix = fmt.Sprintf("[%s][%s:%d]", logLevelTable[level], file, line)
 	} else {

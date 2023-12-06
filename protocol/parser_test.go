@@ -188,19 +188,19 @@ func TestParseSingleLine(t *testing.T) {
 	i2 := NewInteger(-20)
 
 	data1, err := parseSingleLine(msg1)
-	if data1.(*SimpleString).Data != ss.Data || err != nil {
+	if data1.(*SimpleString).data != ss.data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg1)))
 	}
 	data2, err := parseSingleLine(msg2)
-	if data2.(*SimpleError).Data != se.Data || err != nil {
+	if data2.(*SimpleError).data != se.data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg2)))
 	}
 	data3, err := parseSingleLine(msg3)
-	if data3.(*Integer).Data != i1.Data || err != nil {
+	if data3.(*Integer).data != i1.data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg3)))
 	}
 	data4, err := parseSingleLine(msg4)
-	if data4.(*Integer).Data != i2.Data || err != nil {
+	if data4.(*Integer).data != i2.data || err != nil {
 		t.Error(fmt.Sprintf("Protocol error: %s", string(msg4)))
 	}
 }
@@ -234,12 +234,12 @@ func TestParseBulkString(t *testing.T) {
 	bs2 := NewBulkString([]byte(""))
 
 	data1, err := parseBulkString(msg1)
-	if !bytes.Equal(data1.(*BulkString).Data, bs1.Data) || err != nil {
-		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data1.(*BulkString).Data, bs1.Data))
+	if !bytes.Equal(data1.(*BulkString).data, bs1.data) || err != nil {
+		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data1.(*BulkString).data, bs1.data))
 	}
 	data2, err := parseBulkString(msg2)
-	if !bytes.Equal(data2.(*BulkString).Data, bs2.Data) || err != nil {
-		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data2.(*BulkString).Data, bs2.Data))
+	if !bytes.Equal(data2.(*BulkString).data, bs2.data) || err != nil {
+		t.Error(fmt.Sprintf("Protocol error. data: %v, expect: %v", data2.(*BulkString).data, bs2.data))
 	}
 }
 

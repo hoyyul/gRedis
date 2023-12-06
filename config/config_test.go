@@ -24,7 +24,7 @@ func TestConfig_ParseConfFile(t *testing.T) {
 	if cfg.LogLevel != "info" {
 		t.Error(fmt.Sprintf("cfg.LogLevel == %s, expect info", cfg.LogLevel))
 	}
-	if cfg.DbNum != 16 {
-		t.Error(fmt.Sprintf("cfg.ShardNum == %d, expect 16", cfg.DbNum))
+	if cfg.SegNum != 16 {
+		t.Error(fmt.Sprintf("cfg.SegNum == %d, expect 16", cfg.SegNum))
 	}
 }

@@ -20,7 +20,7 @@ var (
 	defaultPort     int    = 6379
 	defaultLogDir   string = "./"
 	defaultLogLevel string = "info"
-	defalutDbNum    int    = 16
+	defalutSegNum   int    = 16
 )
 
 type Config struct {
@@ -29,7 +29,7 @@ type Config struct {
 	Port       int
 	LogDir     string
 	LogLevel   string
-	DbNum      int
+	SegNum     int // segmentation number
 }
 
 func initFlag(conf *Config) {
@@ -38,7 +38,7 @@ func initFlag(conf *Config) {
 	flag.IntVar(&(conf.Port), "port", defaultPort, "Bind a server port")
 	flag.StringVar(&(conf.LogDir), "logdir", defaultLogDir, "Set log directory")
 	flag.StringVar(&(conf.LogLevel), "loglevel", defaultLogLevel, "Set log level")
-	flag.IntVar(&(conf.DbNum), "dbnum", defalutDbNum, "Set database number")
+	flag.IntVar(&(conf.SegNum), "segnum", defalutSegNum, "Set database number")
 }
 
 func Init() {
@@ -47,7 +47,7 @@ func Init() {
 		Port:     defaultPort,
 		LogDir:   defaultLogDir,
 		LogLevel: defaultLogLevel,
-		DbNum:    defalutDbNum,
+		SegNum:   defalutSegNum,
 	}
 
 	initFlag(_conf)
@@ -101,8 +101,8 @@ func (conf *Config) ParseConfFile() error {
 			conf.LogDir = argvs[1]
 		case "loglevel":
 			conf.LogLevel = strings.ToLower(argvs[1])
-		case "dbnum":
-			conf.DbNum, err = strconv.Atoi(argvs[1])
+		case "segnum":
+			conf.SegNum, err = strconv.Atoi(argvs[1])
 			if err != nil {
 				return err
 			}

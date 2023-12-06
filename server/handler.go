@@ -1,8 +1,8 @@
 package server
 
 import (
-	"bufio"
 	"gRedis/logger"
+	"gRedis/protocol"
 	"io"
 	"net"
 )
@@ -14,33 +14,37 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) handle(conn net.Conn) {
+func (h *Handler) Handle(conn net.Conn) {
 	defer conn.Close()
 
-	// Create a reader to read lines from the client
-	reader := bufio.NewReader(conn)
-
-	for {
-		// Read a line (request) from the client
-		_, err := reader.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				// Client closed the connection, exit the loop
-				logger.Info("connection close")
-				return
+	// parse conn
+	ch := protocol.ParseStream(conn)
+	for resp := range ch {
+		if resp.Err != nil {
+			if resp.Err != io.EOF {
+				logger.Panic("Connection: ", conn.RemoteAddr().String(), ", Panic: ", resp.Err)
+			} else {
+				logger.Info("Close connection: ", conn.RemoteAddr().String())
 			}
-			logger.Panic(err)
 			return
 		}
 
-		// parse request
-		// todo...
+		if resp.Data == nil {
+			logger.Error("Get empty array from: ", conn.RemoteAddr().String())
+			continue
+		}
+
+		// get parsed data
+		arrayData, ok := resp.Data.(*protocol.Array)
+		if !ok {
+			logger.Error("Data from connection: ", conn.RemoteAddr().String(), "is not a valid array")
+			continue
+		}
 
 		// excute parsed command
-		// todo...
-
-		// get response
-		response := "ERROR: Unsupported command\r\n" // Example response
+		command := arrayData.ToCommand()
+		// todo... get response
+		response := "ERROR: Unsupported command\r\n"
 
 		// Send the response back to the client
 		_, err = conn.Write([]byte(response))
