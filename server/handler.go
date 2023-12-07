@@ -30,7 +30,7 @@ func (h *Handler) Handle(conn net.Conn) {
 		}
 
 		if resp.Data == nil {
-			logger.Error("Get empty array from: ", conn.RemoteAddr().String())
+			logger.Error("Get empty data from: ", conn.RemoteAddr().String())
 			continue
 		}
 
@@ -40,6 +40,8 @@ func (h *Handler) Handle(conn net.Conn) {
 			logger.Error("Data from connection: ", conn.RemoteAddr().String(), "is not a valid array")
 			continue
 		}
+
+		// empty array? null array? not likely happen...
 
 		// excute parsed command
 		command := arrayData.ToCommand()

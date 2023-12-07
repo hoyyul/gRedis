@@ -57,7 +57,7 @@ func (m *ConcurrentMap) Set(key string, value any) int {
 	return added
 }
 
-func (m *ConcurrentMap) Delete(key string, value any) int {
+func (m *ConcurrentMap) Delete(key string) int {
 	pos := m.getKeyPos(key)
 
 	segmentation := m.table[pos]
@@ -69,7 +69,7 @@ func (m *ConcurrentMap) Delete(key string, value any) int {
 		m.count--
 		return 1
 	}
-	segmentation.ht[key] = value
+
 	return 0
 }
 
