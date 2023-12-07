@@ -1,7 +1,7 @@
-package db
+package memdb
 
 import (
-	"hash/fnv"
+	"gRedis/util"
 	"sync"
 )
 
@@ -15,7 +15,7 @@ type ConcurrentMap struct {
 
 type segmentation struct {
 	ht   map[string]any // hash table
-	rwMu sync.RWMutex   //  The lock can be held by an arbitrary number of readers or a single writer.
+	rwMu *sync.RWMutex  //  The lock can be held by an arbitrary number of readers or a single writer.
 }
 
 func NewConcurrentMap(size int) *ConcurrentMap {
@@ -30,21 +30,14 @@ func NewConcurrentMap(size int) *ConcurrentMap {
 	}
 
 	for i := 0; i < size; i++ {
-		m.table[i] = &segmentation{ht: make(map[string]any, 0)}
+		m.table[i] = &segmentation{ht: make(map[string]any, 0), rwMu: &sync.RWMutex{}}
 	}
 
 	return m
 }
 
-func Hash(key string) int {
-	h := fnv.New32a()
-	h.Write([]byte(key))
-
-	return int(h.Sum32())
-}
-
 func (m *ConcurrentMap) getKeyPos(key string) int {
-	hash := Hash(key)
+	hash := util.Hash(key)
 	return hash
 }
 

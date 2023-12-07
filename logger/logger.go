@@ -30,7 +30,7 @@ var (
 var (
 	logLevelTable = []string{"debug", "info", "warning", "panic", "error"}
 	logConf       *LogConfig
-	logMu         sync.Mutex
+	logMu         *sync.Mutex
 	logger        *log.Logger
 	prefix        string = ""
 )
@@ -41,6 +41,8 @@ func Init(config *config.Config) {
 		Name:     "log",
 		LogLevel: INFO,
 	}
+
+	logMu = &sync.Mutex{}
 
 	for i := range logLevelTable {
 		if logLevelTable[i] == config.LogLevel {
