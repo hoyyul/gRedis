@@ -57,7 +57,7 @@ func (db *MemDb) DeleteExpire(key string) int {
 	return db.expires.Delete(key)
 }
 
-func (db *MemDb) DeleteExpireKey(key string) {
+func (db *MemDb) DeleteExpiredKey(key string) {
 	db.locks.Lock(key)
 	defer db.locks.UnLock(key)
 	db.dict.Delete(key)
