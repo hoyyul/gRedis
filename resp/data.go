@@ -1,4 +1,4 @@
-package protocol
+package resp
 
 // reference: https://redis.io/docs/reference/protocol-spec/
 /*
@@ -40,7 +40,7 @@ type BulkString struct {
 	data []byte // bytes("OK")
 }
 
-type Array struct {
+type RedisArray struct {
 	data []RedisData // [SimpleString("OK"), SimpleError("ERROR"), Integer(-15), BulkString(bytes("OK"))]
 }
 
@@ -140,17 +140,17 @@ func (bs *BulkString) String() string {
 }
 
 // Array
-func NewArray(data []RedisData) *Array {
-	return &Array{
+func NewArray(data []RedisData) *RedisArray {
+	return &RedisArray{
 		data: data,
 	}
 }
 
-func (a *Array) GetData() []RedisData {
+func (a *RedisArray) GetData() []RedisData {
 	return a.data
 }
 
-func (a *Array) GetBytesData() []byte {
+func (a *RedisArray) GetBytesData() []byte {
 	arr := make([]byte, 0, len(a.GetData()))
 	for i := range a.data {
 		arr = append(arr, a.data[i].GetBytesData()...)
@@ -158,7 +158,7 @@ func (a *Array) GetBytesData() []byte {
 	return arr
 }
 
-func (a *Array) ToRedisFormat() []byte {
+func (a *RedisArray) ToRedisFormat() []byte {
 	if a.data == nil {
 		return []byte("*-1\r\n")
 	}
@@ -171,11 +171,11 @@ func (a *Array) ToRedisFormat() []byte {
 	return arr
 }
 
-func (a *Array) String() string {
+func (a *RedisArray) String() string {
 	return strings.Join(a.ToStringCommand(), " ")
 }
 
-func (a *Array) ToCommand() [][]byte {
+func (a *RedisArray) ToCommand() [][]byte {
 	arr := make([][]byte, 0, len(a.GetData()))
 	for i := range a.GetData() {
 		arr = append(arr, a.GetData()[i].GetBytesData())
@@ -183,7 +183,7 @@ func (a *Array) ToCommand() [][]byte {
 	return arr
 }
 
-func (a *Array) ToStringCommand() []string {
+func (a *RedisArray) ToStringCommand() []string {
 	arr := make([]string, 0, len(a.GetData()))
 	for i := range a.GetData() {
 		arr = append(arr, a.GetData()[i].String())

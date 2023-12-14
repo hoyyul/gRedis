@@ -1,4 +1,4 @@
-package protocol
+package resp
 
 import (
 	"bufio"
@@ -25,7 +25,7 @@ func TestParseStream(t *testing.T) {
 			break
 		}
 
-		arr := resp.Data.(*Array).GetData()
+		arr := resp.Data.(*RedisArray).GetData()
 		if !bytes.Equal(arr[0].(*BulkString).GetData(), []byte("hello")) {
 			t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr[0].GetBytesData(), []byte("hello")))
 		}
@@ -49,7 +49,7 @@ func TestParseStream(t *testing.T) {
 			break
 		}
 
-		arr := resp.Data.(*Array)
+		arr := resp.Data.(*RedisArray)
 		if arr.GetData() != nil || !bytes.Equal(arr.ToRedisFormat(), []byte("*-1\r\n")) {
 			t.Error("Stream error.")
 		}
@@ -67,7 +67,7 @@ func TestParseStream(t *testing.T) {
 			break
 		}
 
-		arr := resp.Data.(*Array)
+		arr := resp.Data.(*RedisArray)
 		if len(arr.GetData()) != 0 || !bytes.Equal(arr.ToRedisFormat(), []byte("*0\r\n")) {
 			t.Error("Stream error.")
 		}
@@ -118,7 +118,7 @@ func TestParseStream(t *testing.T) {
 			break
 		}
 
-		arr := resp.Data.(*Array)
+		arr := resp.Data.(*RedisArray)
 		if k == 0 {
 			if arr.GetData()[0].(*Integer).GetData() != 1 {
 				t.Error(fmt.Sprintf("Stream error. msg: %v expect %v", arr.GetData()[0].(*Integer).GetData(), 1))

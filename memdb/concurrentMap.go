@@ -30,7 +30,7 @@ func NewConcurrentMap(size int) *ConcurrentMap {
 	}
 
 	for i := 0; i < size; i++ {
-		m.table[i] = &segmentation{ht: make(map[string]any, 0), rwMu: &sync.RWMutex{}}
+		m.table[i] = &segmentation{ht: make(map[string]any), rwMu: &sync.RWMutex{}}
 	}
 
 	return m
@@ -41,6 +41,7 @@ func (m *ConcurrentMap) getKeyPos(key string) int {
 	return hash
 }
 
+// 设置int输出而不是bool 是为了记录新增key数量
 func (m *ConcurrentMap) Set(key string, value any) int {
 	added := 0
 	pos := m.getKeyPos(key)
@@ -95,6 +96,7 @@ func (m *ConcurrentMap) Clear() {
 	*m = *NewConcurrentMap(m.size) // 这里改的是指针
 }
 
+// 这里拿到的keys有可能有过期的，需要lazy deletion
 func (m *ConcurrentMap) Keys() []string {
 	keys := make([]string, m.count)
 	k := 0

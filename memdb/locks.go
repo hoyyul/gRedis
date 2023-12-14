@@ -12,11 +12,11 @@ type LocksManager struct {
 }
 
 func NewLocksManager(size int) *LocksManager {
-	m := &LocksManager{}
+	locks := make([]*sync.RWMutex, size)
 	for i := 0; i < size; i++ {
-		m.locks[i] = &sync.RWMutex{}
+		locks[i] = &sync.RWMutex{}
 	}
-	return m
+	return &LocksManager{locks: locks}
 }
 
 func (m *LocksManager) GetKeyPos(key string) int {
@@ -24,6 +24,7 @@ func (m *LocksManager) GetKeyPos(key string) int {
 	return pos % len(m.locks)
 }
 
+// 即使映射到同一pos，也是前一个锁释放了，后一个才结束阻塞并且上锁，保证安全性。
 func (m *LocksManager) Lock(key string) {
 	pos := m.GetKeyPos(key)
 	m.locks[pos].Lock()

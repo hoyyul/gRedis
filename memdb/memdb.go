@@ -1,8 +1,10 @@
 package memdb
 
 import (
+	"fmt"
 	"gRedis/logger"
-	"gRedis/protocol"
+	"gRedis/resp"
+	"strings"
 	"time"
 )
 
@@ -20,21 +22,21 @@ func NewMemDb() *MemDb {
 	}
 }
 
-func (db *MemDb) ExecCommand(cmd [][]byte) protocol.RedisData {
-	cmdName := string(cmd[0])
+func (db *MemDb) ExecCommand(cmd [][]byte) resp.RedisData {
+	cmdName := strings.ToLower(string((cmd[0])))
 	if command, ok := CmdTable[cmdName]; ok {
 		return command.executor(db, cmd)
 	}
-	return protocol.NewSimpleError("ERROR: cmd unsupported type")
+	return resp.NewSimpleError(fmt.Sprintf("unknown command '%s'", cmdName))
 }
 
 // return true if expired
 func (db *MemDb) CheckExpire(key string) bool {
 	_expireTime, ok := db.expires.Get(key)
 
-	// key not with expire time
+	// key is persistent
 	if !ok {
-		return true
+		return false
 	}
 
 	// key is expired
@@ -44,12 +46,12 @@ func (db *MemDb) CheckExpire(key string) bool {
 	return now > expireTime
 }
 
-func (db *MemDb) SetExpire(key string, expire int64) int {
+func (db *MemDb) SetExpire(key string, ttl int64) int {
 	if _, ok := db.dict.Get(key); !ok {
 		logger.Error("SetExpire: key doesn't exist")
 		return 0
 	}
-	db.expires.Set(key, expire)
+	db.expires.Set(key, ttl)
 	return 1
 }
 
@@ -57,9 +59,14 @@ func (db *MemDb) DeleteExpire(key string) int {
 	return db.expires.Delete(key)
 }
 
-func (db *MemDb) DeleteExpiredKey(key string) {
-	db.locks.Lock(key)
-	defer db.locks.UnLock(key)
-	db.dict.Delete(key)
-	db.expires.Delete(key)
+// lazy deletion
+func (db *MemDb) DeleteExpiredKey(key string) bool {
+	if db.CheckExpire(key) {
+		db.locks.Lock(key)
+		defer db.locks.UnLock(key)
+		db.dict.Delete(key)
+		db.expires.Delete(key)
+		return true
+	}
+	return false
 }

@@ -1,4 +1,4 @@
-package protocol
+package resp
 
 import (
 	"bufio"
@@ -17,7 +17,7 @@ type readBuffer struct {
 	multiLine bool
 	arrayLen  int
 	inArray   bool
-	arrayData *Array
+	arrayData *RedisArray
 }
 
 func ParseStream(reader io.Reader) <-chan *RedisResp {
@@ -151,7 +151,8 @@ func readline(reader *bufio.Reader, buf *readBuffer) (msg []byte, err error) {
 
 func parseSingleLine(msg []byte) (RedisData, error) {
 	msgType := msg[0]
-	msgData := string(msg[1 : len(msg)-2]) // discard flag and "\r\n"
+	// read header; discard flag and "\r\n"
+	msgData := string(msg[1 : len(msg)-2])
 	var data RedisData
 
 	switch msgType {
@@ -165,8 +166,6 @@ func parseSingleLine(msg []byte) (RedisData, error) {
 			return nil, err
 		}
 		data = NewInteger(integerData)
-	default:
-		// not valid?
 	}
 
 	return data, nil
