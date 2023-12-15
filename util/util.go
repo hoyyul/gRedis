@@ -1,6 +1,8 @@
 package util
 
-import "hash/fnv"
+import (
+	"hash/fnv"
+)
 
 func Hash(key string) int {
 	h := fnv.New32a()
@@ -51,6 +53,9 @@ func PattenMatch(pattern, src string) bool {
 			for srcPos < srcLen {
 				for srcPos < srcLen && src[srcPos] != pattern[patPos] {
 					srcPos++
+				}
+				if srcPos == srcLen {
+					return patPos == patLen
 				}
 				if PattenMatch(pattern[patPos+1:], src[srcPos+1:]) {
 					return true

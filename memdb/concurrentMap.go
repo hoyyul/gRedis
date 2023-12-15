@@ -38,7 +38,7 @@ func NewConcurrentMap(size int) *ConcurrentMap {
 
 func (m *ConcurrentMap) getKeyPos(key string) int {
 	hash := util.Hash(key)
-	return hash
+	return hash % m.size
 }
 
 // 设置int输出而不是bool 是为了记录新增key数量

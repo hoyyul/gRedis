@@ -9,6 +9,16 @@ import (
 	"time"
 )
 
+func pingKeys(db *MemDb, cmd [][]byte) resp.RedisData {
+	if len(cmd) > 2 {
+		return resp.NewSimpleError("ERR wrong number of arguments for command")
+	}
+	if len(cmd) == 1 {
+		return resp.NewSimpleString("PONG")
+	}
+	return resp.NewBulkString(cmd[1])
+}
+
 func delKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 2 {
 		return resp.NewSimpleError("ERR wrong number of arguments for command")
@@ -77,7 +87,7 @@ func expireKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 	var res int
 	// set ttl
-	v, err := strconv.ParseInt(string(cmd[1]), 10, 64)
+	v, err := strconv.ParseInt(string(cmd[2]), 10, 64)
 	if err != nil {
 		return resp.NewSimpleError("value is not an integer or out of range")
 	}
@@ -129,7 +139,7 @@ func persistKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	key := string(cmd[1])
-	if !db.DeleteExpiredKey(key) {
+	if db.DeleteExpiredKey(key) {
 		return resp.NewInteger(int64(0))
 	}
 	db.locks.Lock(string(key))
@@ -146,7 +156,7 @@ func ttlKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	key := string(cmd[1])
-	if !db.DeleteExpiredKey(key) {
+	if db.DeleteExpiredKey(key) {
 		return resp.NewInteger(int64(-2))
 	}
 	db.locks.RLock(key)
@@ -163,4 +173,51 @@ func ttlKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	return resp.NewInteger(ttl.(int64) - now)
+}
+
+func renameKey(db *MemDb, cmd [][]byte) resp.RedisData {
+	if len(cmd) != 3 {
+		return resp.NewSimpleError("ERR wrong number of arguments for command")
+	}
+
+	newKey := string(cmd[2])
+	oldKey := string(cmd[1])
+	if db.DeleteExpiredKey(oldKey) {
+		return resp.NewSimpleError("no such key")
+	}
+
+	db.locks.Lock(oldKey)
+	defer db.locks.UnLock(oldKey)
+
+	oldValue, ok := db.dict.Get(oldKey)
+	if !ok {
+		return resp.NewSimpleError("no such key")
+	}
+
+	oldTTL, ok := db.expires.Get(oldKey)
+
+	db.dict.Delete(oldKey)
+	db.expires.Delete(oldKey)
+	// If newkey already exists it is overwritten
+	db.dict.Delete(newKey)
+	db.expires.Delete(newKey)
+	db.dict.Set(newKey, oldValue)
+
+	// If a key is renamed with RENAME, the associated time to live is transferred to the new key name.
+	if ok {
+		db.expires.Set(newKey, oldTTL)
+	}
+
+	return resp.NewSimpleString("OK")
+}
+
+func RegisterKeyCommands() {
+	RegisterCommand("ping", pingKeys)
+	RegisterCommand("del", delKey)
+	RegisterCommand("exists", existsKey)
+	RegisterCommand("keys", keysKey)
+	RegisterCommand("expire", expireKey)
+	RegisterCommand("persist", persistKey)
+	RegisterCommand("ttl", ttlKey)
+	RegisterCommand("rename", renameKey)
 }

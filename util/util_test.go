@@ -10,6 +10,7 @@ func TestPatternMatch(t *testing.T) {
 	p5, s5, s5_1, s5_2 := "h[ae]llo", "hello", "hallo", "hillo"
 	p6, s6, s6_1 := "h[^e]llo", "hallo", "hello"
 	p7, s7, s7_1, s7_2 := "h[a-c]llo", "hallo", "hbllo", "hdllo"
+	p8, s8 := "*name*", "age"
 
 	if PattenMatch(p1, s1) {
 		t.Error("PattenMatch(\"\", \"a\") should return false")
@@ -61,6 +62,9 @@ func TestPatternMatch(t *testing.T) {
 	}
 	if PattenMatch(p7, s7_2) {
 		t.Error("PattenMatch(\"h[a-c]llo\", \"hdllo\") should return false")
+	}
+	if PattenMatch(p8, s8) {
+		t.Error("PattenMatch(\"*name*\", \"age\") should return false")
 	}
 
 }

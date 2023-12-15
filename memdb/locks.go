@@ -1,6 +1,7 @@
 package memdb
 
 import (
+	"fmt"
 	"gRedis/util"
 	"sort"
 	"sync"
@@ -20,6 +21,7 @@ func NewLocksManager(size int) *LocksManager {
 }
 
 func (m *LocksManager) GetKeyPos(key string) int {
+	key = fmt.Sprintf("@%s&", key)
 	pos := util.Hash(key) // 可能比MaxSegSize大
 	return pos % len(m.locks)
 }

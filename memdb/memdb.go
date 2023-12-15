@@ -2,6 +2,7 @@ package memdb
 
 import (
 	"fmt"
+	"gRedis/config"
 	"gRedis/logger"
 	"gRedis/resp"
 	"strings"
@@ -16,9 +17,9 @@ type MemDb struct {
 
 func NewMemDb() *MemDb {
 	return &MemDb{
-		dict:    NewConcurrentMap(MaxSegSize),
-		expires: NewConcurrentMap(MaxSegSize),
-		locks:   NewLocksManager(2 * MaxSegSize),
+		dict:    NewConcurrentMap(config.Conf.SegNum),
+		expires: NewConcurrentMap(config.Conf.SegNum),
+		locks:   NewLocksManager(2 * config.Conf.SegNum),
 	}
 }
 
