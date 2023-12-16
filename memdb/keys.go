@@ -25,12 +25,13 @@ func delKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	deleted := 0
-	for _, key := range cmd[1:] {
-		if !db.DeleteExpiredKey(string(key)) {
-			db.locks.Lock(string(key))
-			deleted += db.dict.Delete(string(key))
-			db.DeleteExpire(string(key))
-			db.locks.UnLock(string(key))
+	for _, k := range cmd[1:] {
+		key := string(k)
+		if !db.DeleteExpiredKey(key) {
+			db.locks.Lock(key)
+			deleted += db.dict.Delete(key)
+			db.DeleteExpire(key)
+			db.locks.UnLock(key)
 		}
 	}
 
@@ -43,13 +44,14 @@ func existsKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	existed := 0
-	for _, key := range cmd[1:] {
-		if !db.DeleteExpiredKey(string(key)) {
-			db.locks.RLock(string(key))
-			if _, ok := db.dict.Get(string(key)); ok {
+	for _, k := range cmd[1:] {
+		key := string(k)
+		if !db.DeleteExpiredKey(key) {
+			db.locks.RLock(key)
+			if _, ok := db.dict.Get(key); ok {
 				existed++
 			}
-			db.locks.RUnLock(string(key))
+			db.locks.RUnLock(key)
 		}
 	}
 
@@ -89,7 +91,7 @@ func expireKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	// set ttl
 	v, err := strconv.ParseInt(string(cmd[2]), 10, 64)
 	if err != nil {
-		return resp.NewSimpleError("value is not an integer or out of range")
+		return resp.NewSimpleError("value is not an integer")
 	}
 	ttl := time.Now().Unix() + v
 
@@ -142,8 +144,8 @@ func persistKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if db.DeleteExpiredKey(key) {
 		return resp.NewInteger(int64(0))
 	}
-	db.locks.Lock(string(key))
-	defer db.locks.UnLock(string(key))
+	db.locks.Lock(key)
+	defer db.locks.UnLock(key)
 
 	db.DeleteExpire(key)
 
@@ -186,8 +188,9 @@ func renameKey(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("no such key")
 	}
 
-	db.locks.Lock(oldKey)
-	defer db.locks.UnLock(oldKey)
+	// should lock newkey and oldkey together
+	db.locks.LockKeys([]string{oldKey, newKey})
+	defer db.locks.UnLockKeys([]string{oldKey, newKey})
 
 	oldValue, ok := db.dict.Get(oldKey)
 	if !ok {
@@ -197,15 +200,15 @@ func renameKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	oldTTL, ok := db.expires.Get(oldKey)
 
 	db.dict.Delete(oldKey)
-	db.expires.Delete(oldKey)
+	db.DeleteExpire(oldKey)
 	// If newkey already exists it is overwritten
 	db.dict.Delete(newKey)
-	db.expires.Delete(newKey)
+	db.DeleteExpire(newKey)
 	db.dict.Set(newKey, oldValue)
 
 	// If a key is renamed with RENAME, the associated time to live is transferred to the new key name.
 	if ok {
-		db.expires.Set(newKey, oldTTL)
+		db.SetExpire(newKey, oldTTL.(int64))
 	}
 
 	return resp.NewSimpleString("OK")
