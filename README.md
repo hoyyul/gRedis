@@ -10,17 +10,17 @@ Usage for flag options:
 ```bash
 Usage of ./gRedis:
   -config string
-        Select a config file
+        Set a config file
   -host string
-        Bind a server host (default "127.0.0.1")
+        Set a server host to listen (default "127.0.0.1")
   -logdir string
-        Set log directory (default "./")
+        Set a log directory (default "./")
   -loglevel string
-        Set log level (default "info")
+        Set a log level (default "info")
   -port int
-        Bind a server port (default 6379)
+        Set a server prot to listen (default 6379)
   -segnum int
-        Set database number (default 100)
+        Set a segmentation number for cache database (default 100)
 ```
 
 ## Communication with gRedis server
