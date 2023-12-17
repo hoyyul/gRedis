@@ -136,6 +136,9 @@ func (bs *BulkString) ToRedisFormat() []byte {
 }
 
 func (bs *BulkString) String() string {
+	if bs.data == nil {
+		return "nil"
+	}
 	return string(bs.data)
 }
 

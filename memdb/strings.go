@@ -97,9 +97,10 @@ func setString(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	// set
+	var res resp.RedisData
 	db.locks.Lock(key)
 	defer db.locks.UnLock(key)
-	var res resp.RedisData
+
 	oldVal, oldOk := db.dict.Get(key)
 	if oldOk {
 		if _, ok := oldVal.([]byte); !ok {
@@ -107,22 +108,25 @@ func setString(db *MemDb, cmd [][]byte) resp.RedisData {
 		}
 	}
 
-	if nx {
-		if !oldOk {
-			db.dict.Set(key, val)
-			res = resp.NewSimpleString("OK")
+	if nx || xx {
+		if nx {
+			if !oldOk {
+				db.dict.Set(key, val)
+				res = resp.NewSimpleString("OK")
+			} else {
+				res = resp.NewBulkString(nil)
+			}
 		} else {
-			res = resp.NewBulkString(nil)
+			if oldOk {
+				db.dict.Set(key, val)
+				res = resp.NewSimpleString("OK")
+			} else {
+				res = resp.NewBulkString(nil)
+			}
 		}
-	}
-
-	if xx {
-		if oldOk {
-			db.dict.Set(key, val)
-			res = resp.NewSimpleString("OK")
-		} else {
-			res = resp.NewBulkString(nil)
-		}
+	} else {
+		db.dict.Set(key, val)
+		res = resp.NewSimpleString("OK")
 	}
 
 	if get {
@@ -326,8 +330,8 @@ func mSetString(db *MemDb, cmd [][]byte) resp.RedisData {
 		vals = append(vals, cmd[i+1])
 	}
 
-	db.locks.LockKeys(keys)
-	defer db.locks.UnLockKeys(keys)
+	db.locks.MLock(keys)
+	defer db.locks.MUnLock(keys)
 
 	for i := 0; i < len(keys); i++ {
 		db.DeleteExpiredKey(keys[i])
@@ -351,7 +355,7 @@ func setExString(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("(error) value is not an integer")
 	}
 
-	val := cmd[1]
+	val := cmd[3]
 
 	db.locks.Lock(key)
 	defer db.locks.UnLock(key)
@@ -369,14 +373,13 @@ func setNxString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	// passive delete expired key
 	key := string(cmd[1])
-	if !db.DeleteExpiredKey(key) {
-		return resp.NewInteger(0)
-	}
+	db.DeleteExpiredKey(key)
+
 	if _, ok := db.dict.Get(key); ok {
 		return resp.NewInteger(0)
 	}
 
-	val := cmd[1]
+	val := cmd[2]
 
 	db.locks.Lock(key)
 	defer db.locks.UnLock(key)

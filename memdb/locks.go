@@ -66,7 +66,7 @@ func (m *LocksManager) getSortedLocks(keys []string) []int {
 	return order
 }
 
-func (m *LocksManager) LockKeys(keys []string) {
+func (m *LocksManager) MLock(keys []string) {
 	order := m.getSortedLocks(keys)
 	for i := range order {
 		pos := order[i]
@@ -74,7 +74,7 @@ func (m *LocksManager) LockKeys(keys []string) {
 	}
 }
 
-func (m *LocksManager) UnLockKeys(keys []string) {
+func (m *LocksManager) MUnLock(keys []string) {
 	order := m.getSortedLocks(keys)
 	for i := range order {
 		pos := order[i]
@@ -82,7 +82,7 @@ func (m *LocksManager) UnLockKeys(keys []string) {
 	}
 }
 
-func (m *LocksManager) RLockKeys(keys []string) {
+func (m *LocksManager) MRLock(keys []string) {
 	order := m.getSortedLocks(keys)
 	for i := range order {
 		pos := order[i]
@@ -90,7 +90,7 @@ func (m *LocksManager) RLockKeys(keys []string) {
 	}
 }
 
-func (m *LocksManager) RUnLockKeys(keys []string) {
+func (m *LocksManager) MRUnLock(keys []string) {
 	order := m.getSortedLocks(keys)
 	for i := range order {
 		pos := order[i]

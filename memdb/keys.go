@@ -189,8 +189,8 @@ func renameKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	// should lock newkey and oldkey together
-	db.locks.LockKeys([]string{oldKey, newKey})
-	defer db.locks.UnLockKeys([]string{oldKey, newKey})
+	db.locks.MLock([]string{oldKey, newKey})
+	defer db.locks.MUnLock([]string{oldKey, newKey})
 
 	oldValue, ok := db.dict.Get(oldKey)
 	if !ok {
