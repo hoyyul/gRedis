@@ -15,14 +15,21 @@ func Start(config *config.Config) {
 	}
 	defer listener.Close()
 
-	handler := NewHandler()
+	logger.Info("Server Listen at ", config.Host, ":", config.Port)
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			conn.Close()
-			logger.Panic(err)
+			logger.Error(err)
+			continue
 		}
 
-		go handler.Handle(conn)
+		logger.Info(conn.RemoteAddr().String(), " connected")
+
+		handler := NewHandler()
+		go func(conn net.Conn) {
+			defer conn.Close()
+			handler.Handle(conn)
+		}(conn)
 	}
 }

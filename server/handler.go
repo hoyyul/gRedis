@@ -2,57 +2,60 @@ package server
 
 import (
 	"gRedis/logger"
-	"gRedis/protocol"
+	"gRedis/memdb"
+	"gRedis/resp"
 	"io"
 	"net"
 )
 
 type Handler struct {
+	db *memdb.MemDb
 }
 
 func NewHandler() *Handler {
-	return &Handler{}
+	return &Handler{db: memdb.NewMemDb()}
 }
 
 func (h *Handler) Handle(conn net.Conn) {
-	defer conn.Close()
-
 	// parse conn
-	ch := protocol.ParseStream(conn)
-	for resp := range ch {
-		if resp.Err != nil {
-			if resp.Err != io.EOF {
-				logger.Panic("Connection: ", conn.RemoteAddr().String(), ", Panic: ", resp.Err)
+	ch := resp.ParseStream(conn)
+	for redisResp := range ch {
+		if redisResp.Err != nil {
+			if redisResp.Err != io.EOF {
+				logger.Panic("Connection: ", conn.RemoteAddr().String(), ", Panic: ", redisResp.Err)
 			} else {
 				logger.Info("Close connection: ", conn.RemoteAddr().String())
 			}
 			return
 		}
 
-		if resp.Data == nil {
+		if redisResp.Data == nil {
 			logger.Error("Get empty data from: ", conn.RemoteAddr().String())
 			continue
 		}
 
 		// get parsed data
-		arrayData, ok := resp.Data.(*protocol.Array)
+		arrayData, ok := redisResp.Data.(*resp.RedisArray)
 		if !ok {
 			logger.Error("Data from connection: ", conn.RemoteAddr().String(), "is not a valid array")
 			continue
 		}
 
-		// empty array? null array? not likely happen...
-
 		// excute parsed command
-		command := arrayData.ToCommand()
-		// todo... get response
-		response := "ERROR: Unsupported command\r\n"
+		cmd := arrayData.ToCommand()
+		redisData := h.db.ExecCommand(cmd)
 
-		// Send the response back to the client
-		_, err = conn.Write([]byte(response))
-		if err != nil {
-			logger.Panic(err)
-			return
+		if redisData != nil {
+			_, err := conn.Write(redisData.ToRedisFormat())
+			if err != nil {
+				logger.Error("write response to ", conn.RemoteAddr().String(), " error: ", err.Error())
+			}
+		} else {
+			errData := resp.NewSimpleError("unknown error")
+			_, err := conn.Write(errData.ToRedisFormat())
+			if err != nil {
+				logger.Error("write response to ", conn.RemoteAddr().String(), " error: ", err.Error())
+			}
 		}
 	}
 }

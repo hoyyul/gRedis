@@ -29,6 +29,7 @@ var (
 
 var (
 	logLevelTable = []string{"debug", "info", "warning", "panic", "error"}
+	logFile       *os.File
 	logConf       *LogConfig
 	logMu         *sync.Mutex
 	logger        *log.Logger
@@ -36,9 +37,10 @@ var (
 )
 
 func Init(config *config.Config) {
+	var err error
 	logConf = &LogConfig{
 		Path:     config.LogDir,
-		Name:     "log",
+		Name:     "redis.log",
 		LogLevel: INFO,
 	}
 
@@ -51,21 +53,20 @@ func Init(config *config.Config) {
 		}
 	}
 
-	if _, err := os.Stat(logConf.Path); err != nil {
-		if err := os.Mkdir(logConf.Path, 0755); err != nil {
-			log.Panic("Failed to create log dir")
+	if _, err = os.Stat(logConf.Path); err != nil {
+		if err = os.Mkdir(logConf.Path, 0755); err != nil {
+			log.Panic("Failed to create log dir, ", err)
 		}
 	}
 
 	fileName := path.Join(logConf.Path, logConf.Name)
-	logFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0755)
+	logFile, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		log.Panic("Failed to create log log file")
+		log.Panic("Failed to create log file, ", err)
 	}
-	defer logFile.Close()
 
 	writer := io.MultiWriter(logFile, os.Stdout) // bufio是包装后的io，读写推荐用bufio
-	logger = log.New(writer, prefix, log.LstdFlags)
+	logger = log.New(writer, "", log.LstdFlags)
 }
 
 func setPrefix(level LogLevel) {

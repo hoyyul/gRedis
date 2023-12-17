@@ -20,7 +20,7 @@ var (
 	defaultPort     int    = 6379
 	defaultLogDir   string = "./"
 	defaultLogLevel string = "info"
-	defalutSegNum   int    = 16
+	defalutSegNum   int    = 100
 )
 
 type Config struct {
@@ -54,11 +54,13 @@ func Init() {
 	flag.Parse()
 
 	if ip := net.ParseIP(_conf.Host); ip == nil {
-		log.Panic(errors.New("given host invaild"))
+		log.Panic(errors.New("given ip is invaild"))
 	}
 	if _conf.ConfigFile != "" {
 		err := _conf.ParseConfFile()
-		log.Panic(err)
+		if err != nil {
+			log.Panic(err)
+		}
 	}
 
 	Conf = _conf

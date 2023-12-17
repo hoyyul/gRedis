@@ -3,11 +3,13 @@ package main
 import (
 	"gRedis/config"
 	"gRedis/logger"
+	"gRedis/memdb"
 	"gRedis/server"
 )
 
 func init() {
-
+	memdb.RegisterKeyCommands()
+	memdb.RegisterStringCommands()
 }
 
 func main() {
