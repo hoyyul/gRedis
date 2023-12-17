@@ -8,7 +8,6 @@ go run main.go
 ```
 Usage for flag options:
 ```bash
-go run main.go
 Usage of ./gRedis:
   -config string
         Select a config file
