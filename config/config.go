@@ -33,12 +33,12 @@ type Config struct {
 }
 
 func initFlag(conf *Config) {
-	flag.StringVar(&(conf.ConfigFile), "config", "", "Select a config file")
-	flag.StringVar(&(conf.Host), "host", defaultHost, "Bind a server host")
-	flag.IntVar(&(conf.Port), "port", defaultPort, "Bind a server port")
-	flag.StringVar(&(conf.LogDir), "logdir", defaultLogDir, "Set log directory")
-	flag.StringVar(&(conf.LogLevel), "loglevel", defaultLogLevel, "Set log level")
-	flag.IntVar(&(conf.SegNum), "segnum", defalutSegNum, "Set database number")
+	flag.StringVar(&(conf.ConfigFile), "config", "", "Set a config file")
+	flag.StringVar(&(conf.Host), "host", defaultHost, "Set a server host to listen")
+	flag.IntVar(&(conf.Port), "port", defaultPort, "Set a server prot to listen")
+	flag.StringVar(&(conf.LogDir), "logdir", defaultLogDir, "Set a log directory")
+	flag.StringVar(&(conf.LogLevel), "loglevel", defaultLogLevel, "Set a log level")
+	flag.IntVar(&(conf.SegNum), "segnum", defalutSegNum, "Set a segmentation number for cache database")
 }
 
 func Init() {
