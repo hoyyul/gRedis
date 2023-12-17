@@ -47,42 +47,42 @@ func setString(db *MemDb, cmd [][]byte) resp.RedisData {
 			optNum++
 			i++
 			if i >= len(cmd) {
-				resp.NewSimpleError("(error) syntax error")
+				resp.NewSimpleError("syntax error")
 			}
 			exval, err = strconv.ParseInt(string(cmd[i]), 10, 64)
 			if err != nil {
-				resp.NewSimpleError("(error) value is not an integer")
+				resp.NewSimpleError("value is not an integer")
 			}
 		case "px":
 			px = true
 			optNum++
 			i++
 			if i >= len(cmd) {
-				resp.NewSimpleError("(error) syntax error")
+				resp.NewSimpleError("syntax error")
 			}
 			pxval, err = strconv.ParseInt(string(cmd[i]), 10, 64)
 			if err != nil {
-				return resp.NewSimpleError("(error) value is not an integer")
+				return resp.NewSimpleError("value is not an integer")
 			}
 		case "exat":
 			exat = true
 			optNum++
 			if i >= len(cmd) {
-				return resp.NewSimpleError("(error) syntax error")
+				return resp.NewSimpleError("syntax error")
 			}
 			exatval, err = strconv.ParseInt(string(cmd[i]), 10, 64)
 			if err != nil {
-				return resp.NewSimpleError("(error) value is not an integer")
+				return resp.NewSimpleError("value is not an integer")
 			}
 		case "pxat":
 			pxat = true
 			optNum++
 			if i >= len(cmd) {
-				return resp.NewSimpleError("(error) syntax error")
+				return resp.NewSimpleError("syntax error")
 			}
 			pxatval, err = strconv.ParseInt(string(cmd[i]), 10, 64)
 			if err != nil {
-				return resp.NewSimpleError("(error) value is not an integer")
+				return resp.NewSimpleError("value is not an integer")
 			}
 		case "keepttl":
 			keepttl = true
@@ -93,7 +93,7 @@ func setString(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	if nx && xx || optNum > 1 {
-		return resp.NewSimpleError("(error) syntax error")
+		return resp.NewSimpleError("syntax error")
 	}
 
 	// set
@@ -196,12 +196,12 @@ func getRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	start, err := strconv.Atoi(string(cmd[2]))
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an integer")
+		return resp.NewSimpleError("value is not an integer")
 	}
 
 	end, err := strconv.Atoi(string(cmd[3]))
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an integer")
+		return resp.NewSimpleError("value is not an integer")
 	}
 
 	db.locks.RLock(key)
@@ -251,10 +251,10 @@ func setRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	offset, err := strconv.Atoi(string(cmd[2]))
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an integer")
+		return resp.NewSimpleError("value is not an integer")
 	}
 	if offset < 0 {
-		return resp.NewSimpleError("(error) offset is out of range")
+		return resp.NewSimpleError("offset is out of range")
 	}
 
 	value := cmd[3]
@@ -352,7 +352,7 @@ func setExString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	sec, err := strconv.ParseInt(string(cmd[2]), 10, 64)
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an integer")
+		return resp.NewSimpleError("value is not an integer")
 	}
 
 	val := cmd[3]
@@ -432,7 +432,7 @@ func incrString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
 		if err != nil {
-			return resp.NewSimpleError("(error) value is not an integer")
+			return resp.NewSimpleError("value is not an integer")
 		}
 
 		nV++
@@ -456,7 +456,7 @@ func incrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	increment, err := strconv.ParseInt(string(cmd[2]), 10, 64)
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an integer")
+		return resp.NewSimpleError("value is not an integer")
 	}
 
 	db.locks.Lock(key)
@@ -470,7 +470,7 @@ func incrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
 		if err != nil {
-			return resp.NewSimpleError("(error) value is not an integer")
+			return resp.NewSimpleError("value is not an integer")
 		}
 
 		nV += increment
@@ -503,7 +503,7 @@ func decrString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
 		if err != nil {
-			return resp.NewSimpleError("(error) value is not an integer")
+			return resp.NewSimpleError("value is not an integer")
 		}
 
 		nV--
@@ -527,7 +527,7 @@ func decrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	decrement, err := strconv.ParseInt(string(cmd[2]), 10, 64)
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an integer")
+		return resp.NewSimpleError("value is not an integer")
 	}
 
 	db.locks.Lock(key)
@@ -565,7 +565,7 @@ func incrByFloatString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	increment, err := strconv.ParseFloat(string(cmd[2]), 64)
 	if err != nil {
-		return resp.NewSimpleError("(error) value is not an float")
+		return resp.NewSimpleError("value is not an float")
 	}
 
 	db.locks.Lock(key)
@@ -579,7 +579,7 @@ func incrByFloatString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 		fV, err := strconv.ParseFloat(string(v), 64)
 		if err != nil {
-			return resp.NewSimpleError("(error) value is not an float")
+			return resp.NewSimpleError("value is not an float")
 		}
 
 		fV += increment
