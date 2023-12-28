@@ -20,7 +20,7 @@ GET -- Return the old string stored at key, or nil if key did not exist. An erro
 */
 func setString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -159,7 +159,7 @@ func setString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func getString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -174,7 +174,7 @@ func getString(db *MemDb, cmd [][]byte) resp.RedisData {
 	val, ok := db.dict.Get(key)
 	if ok {
 		if v, ok := val.([]byte); !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		} else {
 			return resp.NewBulkString(v)
 		}
@@ -185,7 +185,7 @@ func getString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func getRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 4 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -213,7 +213,7 @@ func getRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 	v, ok := val.([]byte)
 	if !ok {
-		return resp.NewSimpleError("ERR the value stored at key is not a string")
+		return resp.NewSimpleError("the value stored at key is not a string")
 	}
 
 	if start < 0 {
@@ -241,7 +241,7 @@ func getRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func setRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 4 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// parse cmd
@@ -268,7 +268,7 @@ func setRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if ok {
 		oldVal, ok = val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 	} else {
 		oldVal = make([]byte, 0)
@@ -290,7 +290,7 @@ func setRangeString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func mGetString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	res := make([]resp.RedisData, 0)
@@ -320,7 +320,7 @@ func mGetString(db *MemDb, cmd [][]byte) resp.RedisData {
 // MSET is atomic, so all given keys are set at once.
 func mSetString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 3 || len(cmd)&1 != 1 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	keys := make([]string, 0)
@@ -343,7 +343,7 @@ func mSetString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func setExString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 4 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -368,7 +368,7 @@ func setExString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func setNxString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -391,7 +391,7 @@ func setNxString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func strLenString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -414,7 +414,7 @@ func strLenString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func incrString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -427,7 +427,7 @@ func incrString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if val, ok := db.dict.Get(key); ok {
 		v, ok := val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
@@ -447,7 +447,7 @@ func incrString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func incrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -465,7 +465,7 @@ func incrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if val, ok := db.dict.Get(key); ok {
 		v, ok := val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
@@ -485,7 +485,7 @@ func incrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func decrString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -498,7 +498,7 @@ func decrString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if val, ok := db.dict.Get(key); ok {
 		v, ok := val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
@@ -518,7 +518,7 @@ func decrString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func decrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -536,7 +536,7 @@ func decrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if val, ok := db.dict.Get(key); ok {
 		v, ok := val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 
 		nV, err := strconv.ParseInt(string(v), 10, 64)
@@ -556,7 +556,7 @@ func decrByString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func incrByFloatString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -574,7 +574,7 @@ func incrByFloatString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if val, ok := db.dict.Get(key); ok {
 		v, ok := val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 
 		fV, err := strconv.ParseFloat(string(v), 64)
@@ -597,7 +597,7 @@ func incrByFloatString(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func appendString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	// passive delete expired key
@@ -612,7 +612,7 @@ func appendString(db *MemDb, cmd [][]byte) resp.RedisData {
 	if val, ok := db.dict.Get(key); ok {
 		v, ok := val.([]byte)
 		if !ok {
-			return resp.NewSimpleError("ERR the value stored at key is not a string")
+			return resp.NewSimpleError("the value stored at key is not a string")
 		}
 		v = append(v, apd...)
 		db.dict.Set(key, v)

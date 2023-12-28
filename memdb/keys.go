@@ -11,7 +11,7 @@ import (
 
 func pingKeys(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) > 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 	if len(cmd) == 1 {
 		return resp.NewSimpleString("PONG")
@@ -21,7 +21,7 @@ func pingKeys(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func delKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	deleted := 0
@@ -40,7 +40,7 @@ func delKey(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func existsKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	existed := 0
@@ -60,7 +60,7 @@ func existsKey(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func keysKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	pattern := string(cmd[1])
@@ -85,7 +85,7 @@ LT -- Set expiry only when the new expiry is less than current one
 */
 func expireKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 3 || len(cmd) > 4 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 	var res int
 	// set ttl
@@ -137,7 +137,7 @@ func expireKey(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func persistKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	key := string(cmd[1])
@@ -154,7 +154,7 @@ func persistKey(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func ttlKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	key := string(cmd[1])
@@ -179,7 +179,7 @@ func ttlKey(db *MemDb, cmd [][]byte) resp.RedisData {
 
 func renameKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) != 3 {
-		return resp.NewSimpleError("ERR wrong number of arguments for command")
+		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
 	newKey := string(cmd[2])

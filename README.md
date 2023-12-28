@@ -40,23 +40,23 @@ use `redis-cli` to communicate with gRedis server.
 
 ## Support Redis Commands(Unfinished...)
 You can find usage for [Redis Commands](https://redis.io/commands/). All commands below are supported.
-| key     | string      | 
-|---------|-------------|
-| del     | set         |
-| exists  | get         |
-| keys    | getrange    |
-| expire  | setrange    |
-| persist | mget        |
-| ttl     | mset        |
-| rename  | setex       |
-|         | setnx       |
-|         | strlen      |
-|         | incr        |
-|         | incrby      |
-|         | decr        | 
-|         | decrby      | 
-|         | incrbyfloat | 
-|         | append      | 
+| key     | string      | hash         |
+|---------|-------------|--------------|
+| del     | set         | hdel         |
+| exists  | get         | hexists      |
+| keys    | getrange    | hget         |
+| expire  | setrange    | hgetall      |
+| persist | mget        | hincrby      |
+| ttl     | mset        | hincrbyfloat |
+| rename  | setex       | hkeys        |
+|         | setnx       | hlen         |
+|         | strlen      | hmget        |
+|         | incr        | hmset        |
+|         | incrby      | hset         |
+|         | decr        | hsetnx       |
+|         | decrby      | hvals        |
+|         | incrbyfloat | hstrlen      |
+|         | append      | hrandfield   |
 
 ## Todo
 + [] list, set, hash, channel, sorted set, stream commands
