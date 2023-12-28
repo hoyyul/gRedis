@@ -168,6 +168,7 @@ func hIncrByHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		db.dict.Set(key, NewHash())
+		v, _ = db.dict.Get(key)
 	}
 
 	// wrong type
@@ -206,6 +207,8 @@ func hIncrByFloatHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		db.dict.Set(key, NewHash())
+		v, _ = db.dict.Get(key)
+
 	}
 
 	// wrong type
@@ -225,7 +228,7 @@ func hIncrByFloatHash(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("hash value is not an float")
 	}
 
-	return resp.NewInteger(int64(val))
+	return resp.NewBulkString([]byte(strconv.FormatFloat(val, 'f', -1, 64)))
 }
 
 func hKeysHash(db *MemDb, cmd [][]byte) resp.RedisData {
@@ -348,6 +351,7 @@ func hMSetHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		db.dict.Set(key, NewHash())
+		v, _ = db.dict.Get(key)
 	}
 
 	// wrong type
@@ -381,6 +385,7 @@ func hSetHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		db.dict.Set(key, NewHash())
+		v, _ = db.dict.Get(key)
 	}
 
 	// wrong type
@@ -393,8 +398,7 @@ func hSetHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	for i := 2; i < len(cmd); i += 2 {
 		field := string(cmd[i])
 		val := cmd[i+1]
-		h.Set(field, val)
-		res++
+		res += h.Set(field, val)
 	}
 
 	return resp.NewInteger(int64(res))
@@ -416,6 +420,7 @@ func hSetNxHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		db.dict.Set(key, NewHash())
+		v, _ = db.dict.Get(key)
 	} else {
 		// 0 if the field already exists in the hash and no operation was performed.
 		return resp.NewInteger(0)
@@ -427,8 +432,8 @@ func hSetNxHash(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
 
-	field := string(cmd[3])
-	val := cmd[4]
+	field := string(cmd[2])
+	val := cmd[3]
 	h.Set(field, val)
 
 	return resp.NewInteger(1)
@@ -554,14 +559,14 @@ func hRandFieldHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	var res []resp.RedisData
 	if withvalues {
 		fields, values := h.RandomWithValue(count)
-		res = make([]resp.RedisData, 0, len(fields)*2)
-		for i := 0; i < len(fields); i += 2 {
+		res = make([]resp.RedisData, 0)
+		for i := 0; i < len(fields); i++ {
 			res = append(res, resp.NewBulkString([]byte(fields[i])))
 			res = append(res, resp.NewBulkString(values[i]))
 		}
 	} else {
 		fields := h.Random(count)
-		res = make([]resp.RedisData, 0, len(fields))
+		res = make([]resp.RedisData, 0)
 		for i := 0; i < len(fields); i++ {
 			res = append(res, resp.NewBulkString([]byte(fields[i])))
 		}

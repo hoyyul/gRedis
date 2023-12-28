@@ -1,6 +1,8 @@
 package memdb
 
-import "strconv"
+import (
+	"strconv"
+)
 
 type Hash struct {
 	table map[string][]byte
@@ -10,8 +12,13 @@ func NewHash() *Hash {
 	return &Hash{table: make(map[string][]byte)}
 }
 
-func (h *Hash) Set(key string, v []byte) {
+func (h *Hash) Set(key string, v []byte) int {
+	added := 0
+	if !h.Exist(key) {
+		added = 1
+	}
 	h.table[key] = v
+	return added
 }
 
 func (h *Hash) Get(key string) []byte {
@@ -100,48 +107,59 @@ func (h *Hash) IncrByFloat(key string, increment float64) (float64, bool) {
 }
 
 func (h *Hash) Random(count int) []string {
+	var keys []string
+
 	if count == 0 || h.Len() == 0 {
 		return make([]string, 0)
 	}
-	if count > h.Len() {
-		count = h.Len()
-	}
 
-	res := make([]string, 0, count)
 	if count > 0 {
+		if count > h.Len() {
+			count = h.Len()
+		}
+
+		keys = make([]string, 0, count)
+
 		for key := range h.table {
 			// If the provided count argument is positive, return an array of distinct fields.
-			if len(res) >= count {
+			if len(keys) >= count {
 				break
 			}
-			res = append(res, key)
+			keys = append(keys, key)
 		}
-	} else {
+	} else if count < 0 {
+		keys = make([]string, 0, -count)
 		for {
 			for key := range h.table {
 				// If called with a negative count, the behavior changes and the command is allowed to return the same field multiple times.
-				if len(res) >= count {
-					break
+				if len(keys) >= -count {
+					return keys
 				}
-				res = append(res, key)
+				keys = append(keys, key)
+				break
 			}
 		}
 	}
 
-	return res
+	return keys
 }
 
 func (h *Hash) RandomWithValue(count int) ([]string, [][]byte) {
+	var keys []string
+	var vals [][]byte
+
 	if count == 0 || h.Len() == 0 {
 		return make([]string, 0), make([][]byte, 0)
 	}
-	if count > h.Len() {
-		count = h.Len()
-	}
 
-	keys := make([]string, 0, count)
-	vals := make([][]byte, 0, count)
 	if count > 0 {
+		if count > h.Len() {
+			count = h.Len()
+		}
+
+		keys = make([]string, 0, count)
+		vals = make([][]byte, 0, count)
+
 		for key, val := range h.table {
 			// If the provided count argument is positive, return an array of distinct fields.
 			if len(keys) >= count {
@@ -150,15 +168,18 @@ func (h *Hash) RandomWithValue(count int) ([]string, [][]byte) {
 			keys = append(keys, key)
 			vals = append(vals, val)
 		}
-	} else {
+	} else if count < 0 {
+		keys = make([]string, 0, -count)
+		vals = make([][]byte, 0, -count)
 		for {
 			for key, val := range h.table {
 				// If called with a negative count, the behavior changes and the command is allowed to return the same field multiple times.
-				if len(keys) >= count {
-					break
+				if len(keys) >= -count {
+					return keys, vals
 				}
 				keys = append(keys, key)
 				vals = append(vals, val)
+				break
 			}
 		}
 	}

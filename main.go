@@ -10,6 +10,7 @@ import (
 func init() {
 	memdb.RegisterKeyCommands()
 	memdb.RegisterStringCommands()
+	memdb.RegisterHashCommands()
 }
 
 func main() {
