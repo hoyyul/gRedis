@@ -38,26 +38,25 @@ use `redis-cli` to communicate with gRedis server.
 127.0.0.1:6379> 
 ```
 
-## Support Redis Commands(Unfinished...)
+## Support Redis Commands
 You can find usage for [Redis Commands](https://redis.io/commands/). All commands below are supported.
 | key     | string      | hash         | list    |
-|---------|-------------|--------------|---------|
-|         |             |              | lindex  |
-| del     | set         | hdel         | linsert |
-| exists  | get         | hexists      | llen    |
-| keys    | getrange    | hget         | lmove   |
-| expire  | setrange    | hgetall      | lpop    |
-| persist | mget        | hincrby      | lpos    |
-| ttl     | mset        | hincrbyfloat | lpush   |
-| rename  | setex       | hkeys        | lpushx  |
-|         | setnx       | hlen         | lrange  |
-|         | strlen      | hmget        | lrem    |
-|         | incr        | hmset        | lset    |
-|         | incrby      | hset         | ltrim   |
-|         | decr        | hsetnx       | rpop    |
-|         | decrby      | hvals        | rpush   |
-|         | incrbyfloat | hstrlen      | rpushx  |
-|         | append      | hrandfield   |         |
+|---------|-------------|--------------|---------|   
+| del     | set         | hdel         | lindex  |
+| exists  | get         | hexists      | linsert |
+| keys    | getrange    | hget         | llen    |
+| expire  | setrange    | hgetall      | lmove   |
+| persist | mget        | hincrby      | lpop    |
+| ttl     | mset        | hincrbyfloat | lpos    |
+| rename  | setex       | hkeys        | lpush   |
+|         | setnx       | hlen         | lpushx  |
+|         | strlen      | hmget        | lrange  |
+|         | incr        | hmset        | lrem    |
+|         | incrby      | hset         | lset    |
+|         | decr        | hsetnx       | ltrim   |
+|         | decrby      | hvals        | rpop    |
+|         | incrbyfloat | hstrlen      | rpush   |
+|         | append      | hrandfield   | rpushx  |
 
 ## Todo
 + [] set, channel, sorted set, stream commands
