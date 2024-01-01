@@ -1,6 +1,8 @@
 package memdb
 
-import "bytes"
+import (
+	"bytes"
+)
 
 type List struct {
 	Head *ListNode
@@ -29,15 +31,16 @@ func (l *List) Index(index int) *ListNode {
 		if -index > l.Len {
 			return nil
 		}
-		cur := l.Tail.Prev
-		for i := 0; i < -index; i++ {
+		cur = l.Tail.Prev
+		for i := 0; i < -index-1; i++ {
 			cur = cur.Prev
 		}
 	} else {
-		if index > l.Len {
+		if index >= l.Len {
 			return nil
 		}
-		cur := l.Head.Next
+		cur = l.Head.Next
+		// 这里不包括index的原因是因为以及access了一次node
 		for i := 0; i < index; i++ {
 			cur = cur.Next
 		}
@@ -59,7 +62,7 @@ func (l *List) Pos(val []byte) int {
 func (l *List) InsertBefore(val []byte, pivot []byte) bool {
 	var ok bool
 	for cur := l.Head.Next; cur != l.Tail; cur = cur.Next {
-		if bytes.Equal(cur.Val, val) {
+		if bytes.Equal(cur.Val, pivot) {
 			ok = true
 			node := &ListNode{Prev: cur.Prev, Next: cur, Val: val}
 			cur.Prev = node
@@ -73,7 +76,7 @@ func (l *List) InsertBefore(val []byte, pivot []byte) bool {
 func (l *List) InsertAfter(val []byte, pivot []byte) bool {
 	var ok bool
 	for cur := l.Head.Next; cur != l.Tail; cur = cur.Next {
-		if bytes.Equal(cur.Val, val) {
+		if bytes.Equal(cur.Val, pivot) {
 			ok = true
 			node := &ListNode{Prev: cur, Next: cur.Next, Val: val}
 			cur.Next = node
@@ -134,6 +137,14 @@ func (l *List) Range(start, end int) [][]byte {
 		return nil
 	}
 
+	if end >= l.Len {
+		end = l.Len - 1
+	}
+
+	if start < 0 {
+		start = 0
+	}
+
 	res := make([][]byte, 0, end-start+1)
 	cur := l.Head
 	for i := 0; i <= end; i++ {
@@ -165,6 +176,7 @@ func (l *List) Remove(val []byte, count int) int {
 			if bytes.Equal(cur.Val, val) {
 				cur.Next.Prev = cur.Prev
 				cur.Prev.Next = cur.Next
+				l.Len--
 				removed++
 			}
 			cur = cur.Next
@@ -174,6 +186,7 @@ func (l *List) Remove(val []byte, count int) int {
 			if bytes.Equal(cur.Val, val) {
 				cur.Next.Prev = cur.Prev
 				cur.Prev.Next = cur.Next
+				l.Len--
 				removed++
 			}
 			cur = cur.Prev
@@ -205,8 +218,12 @@ func (l *List) Trim(start, end int) {
 		return
 	}
 
-	if end > l.Len-1 {
+	if end >= l.Len {
 		end = l.Len - 1
+	}
+
+	if start < 0 {
+		start = 0
 	}
 
 	var startNode, endNode *ListNode

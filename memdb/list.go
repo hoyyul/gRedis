@@ -62,7 +62,7 @@ func lInsertList(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	var before bool
 	flag := strings.ToLower(string(cmd[2]))
-	if flag == "before" && flag != "after" {
+	if flag != "before" && flag != "after" {
 		return resp.NewSimpleError("syntax error")
 	} else {
 		if flag == "before" {
@@ -154,22 +154,19 @@ func lMoveList(db *MemDb, cmd [][]byte) resp.RedisData {
 	db.locks.MLock([]string{src, des})
 	defer db.locks.MUnLock([]string{src, des})
 
-	var srcList, desList *List
-	var srcVal, desVal any
-	var ok bool
 	// key not existed
-	srcVal, ok = db.dict.Get(src)
+	srcVal, ok := db.dict.Get(src)
 	if !ok {
 		return resp.NewBulkString(nil)
 	}
-	desVal, ok = db.dict.Get(des)
+	desVal, ok := db.dict.Get(des)
 	if !ok {
 		desVal = NewList()
-		db.dict.Set(des, desList)
+		db.dict.Set(des, desVal)
 	}
 
 	// wrong type
-	srcList, ok = srcVal.(*List)
+	srcList, ok := srcVal.(*List)
 	if !ok {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
@@ -181,7 +178,7 @@ func lMoveList(db *MemDb, cmd [][]byte) resp.RedisData {
 		}
 	}()
 
-	desList, ok = desVal.(*List)
+	desList, ok := desVal.(*List)
 	if !ok {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
@@ -196,6 +193,7 @@ func lMoveList(db *MemDb, cmd [][]byte) resp.RedisData {
 	if desDrc == "left" {
 		desList.LPush(srcPop.Val)
 	} else {
+		fmt.Println(desList, desList.Head, desList.Tail)
 		desList.RPush(srcPop.Val)
 	}
 
@@ -270,7 +268,7 @@ func lPopList(db *MemDb, cmd [][]byte) resp.RedisData {
 }
 
 func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
-	if len(cmd) <= 3 || len(cmd)&1 != 1 {
+	if len(cmd) < 3 || len(cmd)&1 != 1 {
 		return resp.NewSimpleError("wrong number of arguments for command")
 	}
 
@@ -287,7 +285,7 @@ func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) > 3 {
 		// parse options
 		var err error
-		for i := 4; i < len(cmd); i += 2 {
+		for i := 3; i < len(cmd); i += 2 {
 			switch strings.ToLower(string(cmd[i])) {
 			case "rank":
 				rank = true
@@ -362,7 +360,9 @@ func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
 	var cur *ListNode
 	if rank {
 		if rankVal > 0 {
+			pos = -1
 			for cur = l.Head.Next; cur != l.Tail; cur = cur.Next {
+				pos++
 				if bytes.Equal(element, cur.Val) {
 					rankVal--
 				}
@@ -375,14 +375,14 @@ func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
 				if rankVal == 0 {
 					break
 				}
-				pos++
 			}
 		} else {
 			reverse = true
 			pos = l.Len
 			for cur = l.Tail.Prev; cur != l.Head; cur = cur.Prev {
+				pos--
 				if bytes.Equal(element, cur.Val) {
-					rankVal--
+					rankVal++
 				}
 				if maxLen {
 					maxLenVal--
@@ -393,7 +393,6 @@ func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
 				if rankVal == 0 {
 					break
 				}
-				pos--
 			}
 		}
 	} else {
@@ -415,6 +414,9 @@ func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
 				if bytes.Equal(element, cur.Val) {
 					res = append(res, resp.NewInteger(int64(pos)))
 					countVal--
+					if countVal == 0 {
+						break
+					}
 				}
 				if maxLen {
 					if maxLenVal <= 0 {
@@ -429,6 +431,9 @@ func lPosList(db *MemDb, cmd [][]byte) resp.RedisData {
 				if bytes.Equal(element, cur.Val) {
 					res = append(res, resp.NewInteger(int64(pos)))
 					countVal--
+					if countVal == 0 {
+						break
+					}
 				}
 				if maxLen {
 					if maxLenVal <= 0 {
@@ -478,6 +483,7 @@ func lPushList(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		v = NewList()
+		db.dict.Set(key, v)
 	}
 
 	// wrong type
@@ -764,7 +770,7 @@ func rPopList(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	res := make([]resp.RedisData, 0, count)
 	for i := 0; i < count; i++ {
-		node := l.LPop()
+		node := l.RPop()
 		if node == nil {
 			break
 		}
@@ -790,6 +796,7 @@ func rPushList(db *MemDb, cmd [][]byte) resp.RedisData {
 	v, ok := db.dict.Get(key)
 	if !ok {
 		v = NewList()
+		db.dict.Set(key, v)
 	}
 
 	// wrong type
