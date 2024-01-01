@@ -61,3 +61,4 @@ You can find usage for [Redis Commands](https://redis.io/commands/). All command
 ## Todo
 + [] set, channel, sorted set, stream commands
 + [] Cluster Mode
++ [] RDB, AOF persistence
