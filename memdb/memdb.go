@@ -35,12 +35,11 @@ func (db *MemDb) ExecCommand(cmd [][]byte) resp.RedisData {
 func (db *MemDb) CheckExpire(key string) bool {
 	_expireTime, ok := db.expires.Get(key)
 
-	// key is persistent
+	// key is persistent or key not existed
 	if !ok {
 		return false
 	}
 
-	// key is expired
 	expireTime := _expireTime.(int64)
 	now := time.Now().Unix()
 

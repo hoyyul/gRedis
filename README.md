@@ -40,24 +40,25 @@ use `redis-cli` to communicate with gRedis server.
 
 ## Support Redis Commands(Unfinished...)
 You can find usage for [Redis Commands](https://redis.io/commands/). All commands below are supported.
-| key     | string      | hash         |
-|---------|-------------|--------------|
-| del     | set         | hdel         |
-| exists  | get         | hexists      |
-| keys    | getrange    | hget         |
-| expire  | setrange    | hgetall      |
-| persist | mget        | hincrby      |
-| ttl     | mset        | hincrbyfloat |
-| rename  | setex       | hkeys        |
-|         | setnx       | hlen         |
-|         | strlen      | hmget        |
-|         | incr        | hmset        |
-|         | incrby      | hset         |
-|         | decr        | hsetnx       |
-|         | decrby      | hvals        |
-|         | incrbyfloat | hstrlen      |
-|         | append      | hrandfield   |
+| key     | string      | hash         | list    |
+|---------|-------------|--------------|---------|
+|         |             |              | lindex  |
+| del     | set         | hdel         | linsert |
+| exists  | get         | hexists      | llen    |
+| keys    | getrange    | hget         | lmove   |
+| expire  | setrange    | hgetall      | lpop    |
+| persist | mget        | hincrby      | lpos    |
+| ttl     | mset        | hincrbyfloat | lpush   |
+| rename  | setex       | hkeys        | lpushx  |
+|         | setnx       | hlen         | lrange  |
+|         | strlen      | hmget        | lrem    |
+|         | incr        | hmset        | lset    |
+|         | incrby      | hset         | ltrim   |
+|         | decr        | hsetnx       | rpop    |
+|         | decrby      | hvals        | rpush   |
+|         | incrbyfloat | hstrlen      | rpushx  |
+|         | append      | hrandfield   |         |
 
 ## Todo
-+ [] list, set, hash, channel, sorted set, stream commands
++ [] set, channel, sorted set, stream commands
 + [] Cluster Mode
