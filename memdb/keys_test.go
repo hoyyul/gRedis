@@ -148,6 +148,17 @@ func TestExpireKey(t *testing.T) {
 	if ttl3.(int64)-time.Now().Unix() != 10 {
 		t.Error("expire incorrect")
 	}
+
+	// test key doesn't exist
+	// no option
+	expire4 := expireKey(db, [][]byte{[]byte("expire"), []byte("mykey2"), []byte("10")})
+	if !bytes.Equal(expire4.ToRedisFormat(), []byte(":0\r\n")) {
+		t.Error("expire reply is not correct")
+	}
+	_, ok := db.expires.Get("mykey2")
+	if ok {
+		t.Error("expire incorrect")
+	}
 }
 
 func TestTtlKey(t *testing.T) {

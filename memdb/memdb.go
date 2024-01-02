@@ -3,7 +3,6 @@ package memdb
 import (
 	"fmt"
 	"gRedis/config"
-	"gRedis/logger"
 	"gRedis/resp"
 	"strings"
 	"time"
@@ -35,7 +34,7 @@ func (db *MemDb) ExecCommand(cmd [][]byte) resp.RedisData {
 func (db *MemDb) CheckExpire(key string) bool {
 	_expireTime, ok := db.expires.Get(key)
 
-	// key is persistent or key not existed
+	// key is persistent or not in dict table
 	if !ok {
 		return false
 	}
@@ -43,12 +42,15 @@ func (db *MemDb) CheckExpire(key string) bool {
 	expireTime := _expireTime.(int64)
 	now := time.Now().Unix()
 
+	// true if expired; false if key not expired (in both expire table and dict)
 	return now > expireTime
 }
 
+// this guarantee if key can be fount in expire table,
+// it must to be in dict table
 func (db *MemDb) SetExpire(key string, ttl int64) int {
 	if _, ok := db.dict.Get(key); !ok {
-		logger.Error("SetExpire: key doesn't exist")
+		//logger.Error("SetExpire: key doesn't exist")
 		return 0
 	}
 	db.expires.Set(key, ttl)

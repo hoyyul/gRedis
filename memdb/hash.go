@@ -167,8 +167,8 @@ func hIncrByHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	// If key does not exist, a new key holding a hash is created.
 	v, ok := db.dict.Get(key)
 	if !ok {
-		db.dict.Set(key, NewHash())
-		v, _ = db.dict.Get(key)
+		v = NewHash()
+		db.dict.Set(key, v)
 	}
 
 	// wrong type
@@ -206,8 +206,8 @@ func hIncrByFloatHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	// If key does not exist, a new key holding a hash is created.
 	v, ok := db.dict.Get(key)
 	if !ok {
-		db.dict.Set(key, NewHash())
-		v, _ = db.dict.Get(key)
+		v = NewHash()
+		db.dict.Set(key, v)
 
 	}
 
@@ -350,8 +350,8 @@ func hMSetHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	// If key does not exist, a new key holding a hash is created.
 	v, ok := db.dict.Get(key)
 	if !ok {
-		db.dict.Set(key, NewHash())
-		v, _ = db.dict.Get(key)
+		v = NewHash()
+		db.dict.Set(key, v)
 	}
 
 	// wrong type
@@ -384,8 +384,8 @@ func hSetHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	// If key does not exist, a new key holding a hash is created.
 	v, ok := db.dict.Get(key)
 	if !ok {
-		db.dict.Set(key, NewHash())
-		v, _ = db.dict.Get(key)
+		v = NewHash()
+		db.dict.Set(key, v)
 	}
 
 	// wrong type
@@ -419,8 +419,8 @@ func hSetNxHash(db *MemDb, cmd [][]byte) resp.RedisData {
 	// If key does not exist, a new key holding a hash is created.
 	v, ok := db.dict.Get(key)
 	if !ok {
-		db.dict.Set(key, NewHash())
-		v, _ = db.dict.Get(key)
+		v = NewHash()
+		db.dict.Set(key, v)
 	} else {
 		// 0 if the field already exists in the hash and no operation was performed.
 		return resp.NewInteger(0)
