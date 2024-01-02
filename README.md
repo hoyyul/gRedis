@@ -40,25 +40,26 @@ use `redis-cli` to communicate with gRedis server.
 
 ## Support Redis Commands
 You can find usage for [Redis Commands](https://redis.io/commands/). All commands below are supported.
-| key     | string      | hash         | list    |
-|---------|-------------|--------------|---------|   
-| del     | set         | hdel         | lindex  |
-| exists  | get         | hexists      | linsert |
-| keys    | getrange    | hget         | llen    |
-| expire  | setrange    | hgetall      | lmove   |
-| persist | mget        | hincrby      | lpop    |
-| ttl     | mset        | hincrbyfloat | lpos    |
-| rename  | setex       | hkeys        | lpush   |
-|         | setnx       | hlen         | lpushx  |
-|         | strlen      | hmget        | lrange  |
-|         | incr        | hmset        | lrem    |
-|         | incrby      | hset         | lset    |
-|         | decr        | hsetnx       | ltrim   |
-|         | decrby      | hvals        | rpop    |
-|         | incrbyfloat | hstrlen      | rpush   |
-|         | append      | hrandfield   | rpushx  |
+| key     | string      | hash         | list    | set         | 
+|---------|-------------|--------------|---------|-------------|   
+| del     | set         | hdel         | lindex  | sadd        |
+| exists  | get         | hexists      | linsert | scard       |
+| keys    | getrange    | hget         | llen    | sdiff       |
+| expire  | setrange    | hgetall      | lmove   | sdiffstore  | 
+| persist | mget        | hincrby      | lpop    | sinter      |
+| ttl     | mset        | hincrbyfloat | lpos    | sinterstore |
+| rename  | setex       | hkeys        | lpush   | sismember   |
+|         | setnx       | hlen         | lpushx  | smembers    |
+|         | strlen      | hmget        | lrange  | smove       |
+|         | incr        | hmset        | lrem    | spop        |
+|         | incrby      | hset         | lset    | srandmember |
+|         | decr        | hsetnx       | ltrim   | srem        |
+|         | decrby      | hvals        | rpop    | sunion      |
+|         | incrbyfloat | hstrlen      | rpush   | sunionstore | 
+|         | append      | hrandfield   | rpushx  |             |
 
 ## Todo
-+ [] set, channel, sorted set, stream commands
++ [] Channel, sorted set commands
 + [] Cluster Mode
-+ [] RDB, AOF persistence
++ [] RDB, AOF (data persistence)
++ [] Testings
