@@ -66,7 +66,7 @@ func sCardSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	return resp.NewInteger(int64(s.Len()))
 }
 
-func sDiffSet(db *MemDb, cmd [][]byte) resp.RedisData {
+func sInterSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 2 {
 		return resp.NewSimpleError("wrong number of arguments for command")
 	}
@@ -86,7 +86,8 @@ func sDiffSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	v, ok := db.dict.Get(keys[0])
 	if !ok {
-		return resp.NewArray(nil)
+		// Keys that do not exist are considered to be empty sets.
+		v = NewSet()
 	}
 
 	// wrong type
@@ -107,18 +108,22 @@ func sDiffSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	sets := make([]*Set, 0, len(keys)-1)
 	for _, key := range keys[1:] {
 		_set, ok := db.dict.Get(key)
+		var set *Set
 		if ok {
-			set, ok := _set.(*Set)
+			set, ok = _set.(*Set)
 			if !ok {
 				return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 			}
-			sets = append(sets, set)
+		} else {
+			// Keys that do not exist are considered to be empty sets.
+			set = NewSet()
 		}
+		sets = append(sets, set)
 	}
 
-	diff := s.Difference(sets...)
+	inter := s.Intersect(sets...)
 
-	for _, mem := range diff.Members() {
+	for _, mem := range inter.Members() {
 		res = append(res, resp.NewBulkString([]byte(mem)))
 	}
 
@@ -168,21 +173,14 @@ func sInterStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
 
-	// check destination key
-	destVal, ok := db.dict.Get(dest)
-	if !ok {
-		destVal = NewSet()
-	}
+	// whatever old destination key/value it is, just cover before return
+	_, oldOk := db.dict.Get(dest)
+	destSet := NewSet()
 
-	destSet, ok := destVal.(*Set)
-	if !ok {
-		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
-	}
-
-	// if destination set has at least one member, than save to dict tabe before return
 	defer func() {
-		if destSet.Len() > 0 {
-			db.dict.Set(dest, destSet)
+		db.dict.Set(dest, destSet)
+		if oldOk {
+			db.DeleteExpire(dest)
 		}
 	}()
 
@@ -197,7 +195,7 @@ func sInterStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	// calculate set operation
 	sets := make([]*Set, 0, len(keys)-1)
-	for _, key := range keys[2:] {
+	for _, key := range keys[1:] {
 		_set, ok := db.dict.Get(key)
 		if ok {
 			set, ok := _set.(*Set)
@@ -217,7 +215,7 @@ func sInterStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	return resp.NewInteger(int64(destSet.Len()))
 }
 
-func sInterSet(db *MemDb, cmd [][]byte) resp.RedisData {
+func sDiffSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	if len(cmd) < 2 {
 		return resp.NewSimpleError("wrong number of arguments for command")
 	}
@@ -237,7 +235,8 @@ func sInterSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	v, ok := db.dict.Get(keys[0])
 	if !ok {
-		return resp.NewArray(nil)
+		// Keys that do not exist are considered to be empty sets.
+		v = NewSet()
 	}
 
 	// wrong type
@@ -258,18 +257,22 @@ func sInterSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	sets := make([]*Set, 0, len(keys)-1)
 	for _, key := range keys[1:] {
 		_set, ok := db.dict.Get(key)
+		var set *Set
 		if ok {
-			set, ok := _set.(*Set)
+			set, ok = _set.(*Set)
 			if !ok {
 				return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 			}
-			sets = append(sets, set)
+		} else {
+			// Keys that do not exist are considered to be empty sets.
+			set = NewSet()
 		}
+		sets = append(sets, set)
 	}
 
-	inter := s.Intersect(sets...)
+	diff := s.Difference(sets...)
 
-	for _, mem := range inter.Members() {
+	for _, mem := range diff.Members() {
 		res = append(res, resp.NewBulkString([]byte(mem)))
 	}
 
@@ -319,21 +322,14 @@ func sDiffStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
 
-	// check destination key
-	destVal, ok := db.dict.Get(dest)
-	if !ok {
-		destVal = NewSet()
-	}
+	// whatever old destination key/value it is, just cover old before return
+	_, oldOk := db.dict.Get(dest)
+	destSet := NewSet()
 
-	destSet, ok := destVal.(*Set)
-	if !ok {
-		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
-	}
-
-	// if destination set has at least one member, than save to dict tabe before return
 	defer func() {
-		if destSet.Len() > 0 {
-			db.dict.Set(dest, destSet)
+		db.dict.Set(dest, destSet)
+		if oldOk {
+			db.DeleteExpire(dest)
 		}
 	}()
 
@@ -348,7 +344,7 @@ func sDiffStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	// calculate set operation
 	sets := make([]*Set, 0, len(keys)-1)
-	for _, key := range keys[2:] {
+	for _, key := range keys[1:] {
 		_set, ok := db.dict.Get(key)
 		if ok {
 			set, ok := _set.(*Set)
@@ -379,6 +375,8 @@ func sIsMemberSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewInteger(0)
 	}
 
+	member := string(cmd[2])
+
 	db.locks.RLock(key)
 	defer db.locks.RUnLock(key)
 
@@ -393,7 +391,7 @@ func sIsMemberSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
 
-	if !s.Has(key) {
+	if !s.Has(member) {
 		return resp.NewInteger(0)
 	}
 
@@ -533,7 +531,7 @@ func sPopSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		}
 	}()
 
-	if count {
+	if !count {
 		pop := s.Pop()
 		if pop == "" {
 			return resp.NewBulkString(nil)
@@ -593,7 +591,7 @@ func sRandMemberSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	}
 
 	var rand []string
-	if count {
+	if !count {
 		rand = s.Random(1)
 		if rand[0] == "" {
 			return resp.NewBulkString(nil)
@@ -601,13 +599,15 @@ func sRandMemberSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewBulkString([]byte(rand[0]))
 	}
 
-	if countVal > s.Len() {
-		countVal = s.Len()
+	var res []resp.RedisData
+	if countVal < 0 {
+		res = make([]resp.RedisData, 0, -countVal)
+	} else {
+		res = make([]resp.RedisData, 0, countVal)
 	}
 
-	res := make([]resp.RedisData, 0, countVal)
 	rand = s.Random(countVal)
-	for i := 0; i < countVal; i++ {
+	for i := 0; i < len(rand); i++ {
 		res = append(res, resp.NewBulkString([]byte(rand[i])))
 	}
 
@@ -628,8 +628,7 @@ func sRemSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	v, ok := db.dict.Get(key)
 	if !ok {
-		v = NewSet()
-		db.dict.Set(key, v)
+		return resp.NewInteger(0)
 	}
 
 	// wrong type
@@ -667,7 +666,8 @@ func sUnionSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	v, ok := db.dict.Get(keys[0])
 	if !ok {
-		return resp.NewArray(nil)
+		// Keys that do not exist are considered to be empty sets.
+		v = NewSet()
 	}
 
 	// wrong type
@@ -688,13 +688,17 @@ func sUnionSet(db *MemDb, cmd [][]byte) resp.RedisData {
 	sets := make([]*Set, 0, len(keys)-1)
 	for _, key := range keys[1:] {
 		_set, ok := db.dict.Get(key)
+		var set *Set
 		if ok {
-			set, ok := _set.(*Set)
+			set, ok = _set.(*Set)
 			if !ok {
 				return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 			}
-			sets = append(sets, set)
+		} else {
+			// Keys that do not exist are considered to be empty sets.
+			set = NewSet()
 		}
+		sets = append(sets, set)
 	}
 
 	union := s.Union(sets...)
@@ -749,21 +753,14 @@ func sUnionStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
 	}
 
-	// check destination key
-	destVal, ok := db.dict.Get(dest)
-	if !ok {
-		destVal = NewSet()
-	}
+	// whatever old destination key/value it is, just cover before return
+	_, oldOk := db.dict.Get(dest)
+	destSet := NewSet()
 
-	destSet, ok := destVal.(*Set)
-	if !ok {
-		return resp.NewSimpleError("Operation against a key holding the wrong kind of value")
-	}
-
-	// if destination set has at least one member, than save to dict tabe before return
 	defer func() {
-		if destSet.Len() > 0 {
-			db.dict.Set(dest, destSet)
+		db.dict.Set(dest, destSet)
+		if oldOk {
+			db.DeleteExpire(dest)
 		}
 	}()
 
@@ -778,7 +775,7 @@ func sUnionStoreSet(db *MemDb, cmd [][]byte) resp.RedisData {
 
 	// calculate set operation
 	sets := make([]*Set, 0, len(keys)-1)
-	for _, key := range keys[2:] {
+	for _, key := range keys[1:] {
 		_set, ok := db.dict.Get(key)
 		if ok {
 			set, ok := _set.(*Set)
