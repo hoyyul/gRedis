@@ -334,7 +334,7 @@ func mSetString(db *MemDb, cmd [][]byte) resp.RedisData {
 	defer db.locks.MUnLock(keys)
 
 	for i := 0; i < len(keys); i++ {
-		db.DeleteExpiredKey(keys[i])
+		db.DeleteExpire(keys[i])
 		db.dict.Set(keys[i], vals[i])
 	}
 
