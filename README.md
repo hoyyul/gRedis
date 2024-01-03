@@ -41,6 +41,8 @@ use `redis-cli` to communicate with gRedis server.
 ## Benchmark
 You can find details about the benchmark tool in [redis-benchmark](https://redis.io/docs/management/optimization/benchmarks/).
 The testing is conducted on MacBook Pro 2019 with 2.6 GHz 6-Core Intel Core i7 processor, 32.0 GB RAM, and macOS Ventura.
+On average, we can say gRedis reach **85-90%** of the orginal C redis performance.
+
 `redis-benchmark -c 50 -n 200000 -t [get|set|...] -q -p 6379`
 
 gRedis:
@@ -89,7 +91,6 @@ MSET (10 keys): 73502.39 / 95147.48 = 0.7713（77.13%）
 
 (0.9612 + 1.1319 + 0.9314 + 0.9715 + 0.9644 + 0.9625 + 0.9591 + 0.9517 + 0.9285 + 0.9451 + 0.7713) / 11 ≈ 0.9462(94.62%)
 ```
-On average, we can say gRedis reach 85-90% of the orginal C redis performance.
 
 
 ## Support Redis Commands
