@@ -97,23 +97,23 @@ MSET (10 keys): 73502.39 / 95147.48 = 0.7713（77.13%）
 
 ## Support Redis Commands
 You can find usage for [Redis Commands](https://redis.io/commands/). All commands below are supported.
-| key     | string      | hash         | list    | set         | 
-|---------|-------------|--------------|---------|-------------|   
-| del     | set         | hdel         | lindex  | sadd        |
-| exists  | get         | hexists      | linsert | scard       |
-| keys    | getrange    | hget         | llen    | sdiff       |
-| expire  | setrange    | hgetall      | lmove   | sdiffstore  | 
-| persist | mget        | hincrby      | lpop    | sinter      |
-| ttl     | mset        | hincrbyfloat | lpos    | sinterstore |
-| rename  | setex       | hkeys        | lpush   | sismember   |
-|         | setnx       | hlen         | lpushx  | smembers    |
-|         | strlen      | hmget        | lrange  | smove       |
-|         | incr        | hmset        | lrem    | spop        |
-|         | incrby      | hset         | lset    | srandmember |
-|         | decr        | hsetnx       | ltrim   | srem        |
-|         | decrby      | hvals        | rpop    | sunion      |
-|         | incrbyfloat | hstrlen      | rpush   | sunionstore | 
-|         | append      | hrandfield   | rpushx  |             |
+| key     | string      | hash         | list    | set         | other  |
+|---------|-------------|--------------|---------|-------------|--------|   
+| del     | set         | hdel         | lindex  | sadd        | select |
+| exists  | get         | hexists      | linsert | scard       |        |
+| keys    | getrange    | hget         | llen    | sdiff       |        |
+| expire  | setrange    | hgetall      | lmove   | sdiffstore  |        |
+| persist | mget        | hincrby      | lpop    | sinter      |        |
+| ttl     | mset        | hincrbyfloat | lpos    | sinterstore |        |
+| rename  | setex       | hkeys        | lpush   | sismember   |        |
+|         | setnx       | hlen         | lpushx  | smembers    |        |
+|         | strlen      | hmget        | lrange  | smove       |        |
+|         | incr        | hmset        | lrem    | spop        |        |
+|         | incrby      | hset         | lset    | srandmember |        |
+|         | decr        | hsetnx       | ltrim   | srem        |        |
+|         | decrby      | hvals        | rpop    | sunion      |        |
+|         | incrbyfloat | hstrlen      | rpush   | sunionstore |        |
+|         | append      | hrandfield   | rpushx  |             |        |
 
 ## Todo
 + [] Channel, sorted set commands
