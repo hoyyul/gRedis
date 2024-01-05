@@ -20,7 +20,8 @@ var (
 	defaultPort     int    = 6379
 	defaultLogDir   string = "./"
 	defaultLogLevel string = "info"
-	defalutSegNum   int    = 100
+	defaultSegNum   int    = 100
+	defaultDbNum    int    = 16
 )
 
 type Config struct {
@@ -30,6 +31,7 @@ type Config struct {
 	LogDir     string
 	LogLevel   string
 	SegNum     int // segmentation number
+	DbNum      int
 }
 
 type CfgError struct {
@@ -46,7 +48,8 @@ func initFlag(conf *Config) {
 	flag.IntVar(&(conf.Port), "port", defaultPort, "Set a server prot to listen")
 	flag.StringVar(&(conf.LogDir), "logdir", defaultLogDir, "Set a log directory")
 	flag.StringVar(&(conf.LogLevel), "loglevel", defaultLogLevel, "Set a log level")
-	flag.IntVar(&(conf.SegNum), "segnum", defalutSegNum, "Set a segmentation number for cache database")
+	flag.IntVar(&(conf.SegNum), "segnum", defaultSegNum, "Set a segmentation number for a cache database")
+	flag.IntVar(&(conf.DbNum), "dbnum", defaultDbNum, "Set database number for cache storage")
 }
 
 func Init() (*Config, error) {
@@ -55,7 +58,8 @@ func Init() (*Config, error) {
 		Port:     defaultPort,
 		LogDir:   defaultLogDir,
 		LogLevel: defaultLogLevel,
-		SegNum:   defalutSegNum,
+		SegNum:   defaultSegNum,
+		DbNum:    defaultDbNum,
 	}
 
 	initFlag(_conf)
@@ -98,7 +102,7 @@ func (conf *Config) ParseConfFile() error {
 			continue
 		}
 
-		switch argvs[0] {
+		switch strings.ToLower(argvs[0]) {
 		case "host":
 			if ip := net.ParseIP(argvs[1]); ip == nil {
 				return errors.New("given host invaild")
@@ -115,6 +119,11 @@ func (conf *Config) ParseConfFile() error {
 			conf.LogLevel = strings.ToLower(argvs[1])
 		case "segnum":
 			conf.SegNum, err = strconv.Atoi(argvs[1])
+			if err != nil {
+				return err
+			}
+		case "dbnum":
+			conf.DbNum, err = strconv.Atoi(argvs[1])
 			if err != nil {
 				return err
 			}

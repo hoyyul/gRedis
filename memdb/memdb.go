@@ -1,10 +1,7 @@
 package memdb
 
 import (
-	"fmt"
 	"gRedis/config"
-	"gRedis/resp"
-	"strings"
 	"time"
 )
 
@@ -20,14 +17,6 @@ func NewMemDb() *MemDb {
 		expires: NewConcurrentMap(config.Conf.SegNum),
 		locks:   NewLocksManager(2 * config.Conf.SegNum),
 	}
-}
-
-func (db *MemDb) ExecCommand(cmd [][]byte) resp.RedisData {
-	cmdName := strings.ToLower(string((cmd[0])))
-	if command, ok := CmdTable[cmdName]; ok {
-		return command.executor(db, cmd)
-	}
-	return resp.NewSimpleError(fmt.Sprintf("unknown command '%s'", cmdName))
 }
 
 // return true if expired

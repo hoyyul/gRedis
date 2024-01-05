@@ -43,7 +43,7 @@ func Start(config *config.Config) error {
 	clients := make(chan net.Conn)
 
 	// create a resource manager
-	handler := NewHandler()
+	mgr := NewManager(config)
 
 	// start a goroutine to accept client connection
 	go func() {
@@ -62,7 +62,7 @@ func Start(config *config.Config) error {
 		// start a go routine to handle client request
 		case conn := <-clients:
 			logger.Info(conn.RemoteAddr().String(), " connected")
-			go handler.Handle(conn)
+			go mgr.Handle(conn)
 		// exit server
 		case <-osSignals:
 			return nil
