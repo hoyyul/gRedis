@@ -3,8 +3,8 @@ package config
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"strconv"
@@ -32,6 +32,14 @@ type Config struct {
 	SegNum     int // segmentation number
 }
 
+type CfgError struct {
+	message string
+}
+
+func (e *CfgError) Error() string {
+	return e.message
+}
+
 func initFlag(conf *Config) {
 	flag.StringVar(&(conf.ConfigFile), "config", "", "Set a config file")
 	flag.StringVar(&(conf.Host), "host", defaultHost, "Set a server host to listen")
@@ -41,7 +49,7 @@ func initFlag(conf *Config) {
 	flag.IntVar(&(conf.SegNum), "segnum", defalutSegNum, "Set a segmentation number for cache database")
 }
 
-func Init() {
+func Init() (*Config, error) {
 	_conf := &Config{
 		Host:     defaultHost,
 		Port:     defaultPort,
@@ -54,16 +62,18 @@ func Init() {
 	flag.Parse()
 
 	if ip := net.ParseIP(_conf.Host); ip == nil {
-		log.Panic(errors.New("given ip is invaild"))
+		ipErr := &CfgError{message: fmt.Sprintf("Ip address %s is invaild", _conf.Host)}
+		return nil, ipErr
 	}
 	if _conf.ConfigFile != "" {
 		err := _conf.ParseConfFile()
 		if err != nil {
-			log.Panic(err)
+			return nil, err
 		}
 	}
 
 	Conf = _conf
+	return Conf, nil
 }
 
 func (conf *Config) ParseConfFile() error {

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"gRedis/config"
 	"gRedis/logger"
 	"gRedis/memdb"
 	"gRedis/server"
+	"os"
 )
 
 func init() {
@@ -16,7 +18,20 @@ func init() {
 }
 
 func main() {
-	config.Init()
-	logger.Init(config.Conf)
-	server.Start(config.Conf)
+	cfg, err := config.Init()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = logger.Init(cfg)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = server.Start(config.Conf)
+	if err != nil {
+		os.Exit(1)
+	}
 }

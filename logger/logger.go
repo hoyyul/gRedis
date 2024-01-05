@@ -36,7 +36,7 @@ var (
 	prefix        string = ""
 )
 
-func Init(config *config.Config) {
+func Init(config *config.Config) error {
 	var err error
 	logConf = &LogConfig{
 		Path:     config.LogDir,
@@ -53,20 +53,24 @@ func Init(config *config.Config) {
 		}
 	}
 
+	// check dir
 	if _, err = os.Stat(logConf.Path); err != nil {
 		if err = os.Mkdir(logConf.Path, 0755); err != nil {
-			log.Panic("Failed to create log dir, ", err)
+			return err
 		}
 	}
 
+	// check file
 	fileName := path.Join(logConf.Path, logConf.Name)
 	logFile, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		log.Panic("Failed to create log file, ", err)
+		return err
 	}
 
 	writer := io.MultiWriter(logFile, os.Stdout) // bufio是包装后的io，读写推荐用bufio
 	logger = log.New(writer, "", log.LstdFlags)
+
+	return nil
 }
 
 func setPrefix(level LogLevel) {
