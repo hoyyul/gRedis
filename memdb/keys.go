@@ -214,6 +214,38 @@ func renameKey(db *MemDb, cmd [][]byte) resp.RedisData {
 	return resp.NewSimpleString("OK")
 }
 
+func typeKey(db *MemDb, cmd [][]byte) resp.RedisData {
+	if len(cmd) != 2 {
+		return resp.NewSimpleError("wrong number of arguments for command")
+	}
+
+	key := string(cmd[1])
+	if db.DeleteExpiredKey(key) {
+		return resp.NewSimpleString("none")
+	}
+
+	db.locks.RLock(key)
+	defer db.locks.RUnLock(key)
+
+	v, ok := db.dict.Get(key)
+	if !ok {
+		return resp.NewSimpleString("none")
+	}
+
+	switch v.(type) {
+	case []byte:
+		return resp.NewSimpleString("string")
+	case *Hash:
+		return resp.NewSimpleString("hash")
+	case *List:
+		return resp.NewSimpleString("list")
+	case *Set:
+		return resp.NewSimpleString("set")
+	}
+
+	return resp.NewSimpleString("none")
+}
+
 func RegisterKeyCommands() {
 	RegisterCommand("ping", pingKeys)
 	RegisterCommand("del", delKey)
@@ -223,4 +255,5 @@ func RegisterKeyCommands() {
 	RegisterCommand("persist", persistKey)
 	RegisterCommand("ttl", ttlKey)
 	RegisterCommand("rename", renameKey)
+	RegisterCommand("type", typeKey)
 }
