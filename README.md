@@ -7,7 +7,7 @@ gRedis server:
 go run main.go
 ```
 
-Usage for flag options:
+Usage for flags:
 ```bash
 Usage of ./gRedis:
   -config string
