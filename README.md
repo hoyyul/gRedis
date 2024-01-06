@@ -30,9 +30,9 @@ Usage of ./gRedis:
 use `redis-cli` to communicate with gRedis server.
 ```bash
 % redis-cli
-127.0.0.1:6379> ping
+127.0.0.1:6379> PING
 PONG
-127.0.0.1:6379> select 1
+127.0.0.1:6379> SELECT 1
 OK
 127.0.0.1:6379[1]> MSET firstname Jack lastname Stuntman age 35
 OK
@@ -49,17 +49,17 @@ OK
 3) "3"
 4) "2"
 5) "1"
-127.0.0.1:6379[1]> type mylist
+127.0.0.1:6379[1]> TYPE mylist
 list
 127.0.0.1:6379[1]> EXPIRE mylist 20
 (integer) 1
-127.0.0.1:6379[1]> ttl mylist
+127.0.0.1:6379[1]> TTL mylist
 (integer) 13
-127.0.0.1:6379[1]> ttl mylist
+127.0.0.1:6379[1]> TTL mylist
 (integer) 0
 127.0.0.1:6379[1]> LRANGE mylist 0 -1
 (nil)
-127.0.0.1:6379[1]> select 0
+127.0.0.1:6379[1]> SELECT 0
 OK
 127.0.0.1:6379> KEYS *name*
 (empty array)
