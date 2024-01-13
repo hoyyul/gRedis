@@ -23,7 +23,7 @@ Usage of ./gRedis:
   -port int
         Set a server prot to listen (default 6379)
   -segnum int
-        Set a segmentation number for a cache database (default 100)
+        Set segment number for a cache database (default 100)
 ```
 
 ## Communication with gRedis server

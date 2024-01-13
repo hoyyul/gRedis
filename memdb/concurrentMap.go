@@ -8,12 +8,12 @@ import (
 const MaxSegSize int = int(1<<32 - 1) // max signed int32
 
 type ConcurrentMap struct {
-	table []*segmentation
+	table []*segment
 	size  int // table size
 	count int // key counts
 }
 
-type segmentation struct {
+type segment struct {
 	ht   map[string]any // hash table
 	rwMu *sync.RWMutex  //  The lock can be held by an arbitrary number of readers or a single writer.
 }
@@ -24,13 +24,13 @@ func NewConcurrentMap(size int) *ConcurrentMap {
 	}
 
 	m := &ConcurrentMap{
-		table: make([]*segmentation, size),
+		table: make([]*segment, size),
 		size:  size,
 		count: 0,
 	}
 
 	for i := 0; i < size; i++ {
-		m.table[i] = &segmentation{ht: make(map[string]any), rwMu: &sync.RWMutex{}}
+		m.table[i] = &segment{ht: make(map[string]any), rwMu: &sync.RWMutex{}}
 	}
 
 	return m
@@ -46,27 +46,27 @@ func (m *ConcurrentMap) Set(key string, value any) int {
 	added := 0
 	pos := m.getKeyPos(key)
 
-	segmentation := m.table[pos]
-	segmentation.rwMu.Lock()
-	defer segmentation.rwMu.Unlock()
+	segment := m.table[pos]
+	segment.rwMu.Lock()
+	defer segment.rwMu.Unlock()
 
-	if _, ok := segmentation.ht[key]; !ok {
+	if _, ok := segment.ht[key]; !ok {
 		added = 1
 		m.count++
 	}
-	segmentation.ht[key] = value
+	segment.ht[key] = value
 	return added
 }
 
 func (m *ConcurrentMap) Delete(key string) int {
 	pos := m.getKeyPos(key)
 
-	segmentation := m.table[pos]
-	segmentation.rwMu.Lock()
-	defer segmentation.rwMu.Unlock()
+	segment := m.table[pos]
+	segment.rwMu.Lock()
+	defer segment.rwMu.Unlock()
 
-	if _, ok := segmentation.ht[key]; ok {
-		delete(segmentation.ht, key)
+	if _, ok := segment.ht[key]; ok {
+		delete(segment.ht, key)
 		m.count--
 		return 1
 	}
@@ -76,11 +76,11 @@ func (m *ConcurrentMap) Delete(key string) int {
 
 func (m *ConcurrentMap) Get(key string) (any, bool) {
 	pos := m.getKeyPos(key)
-	segmentation := m.table[pos]
-	segmentation.rwMu.RLock()
-	defer segmentation.rwMu.RUnlock()
+	segment := m.table[pos]
+	segment.rwMu.RLock()
+	defer segment.rwMu.RUnlock()
 
-	value, ok := segmentation.ht[key]
+	value, ok := segment.ht[key]
 	return value, ok
 }
 

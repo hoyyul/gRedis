@@ -30,7 +30,7 @@ type Config struct {
 	Port       int
 	LogDir     string
 	LogLevel   string
-	SegNum     int // segmentation number
+	SegNum     int // segment number
 	DbNum      int
 }
 
@@ -48,7 +48,7 @@ func initFlag(conf *Config) {
 	flag.IntVar(&(conf.Port), "port", defaultPort, "Set a server prot to listen")
 	flag.StringVar(&(conf.LogDir), "logdir", defaultLogDir, "Set a log directory")
 	flag.StringVar(&(conf.LogLevel), "loglevel", defaultLogLevel, "Set a log level")
-	flag.IntVar(&(conf.SegNum), "segnum", defaultSegNum, "Set a segmentation number for a cache database")
+	flag.IntVar(&(conf.SegNum), "segnum", defaultSegNum, "Set segment number for a cache database")
 	flag.IntVar(&(conf.DbNum), "dbnum", defaultDbNum, "Set database number for cache storage")
 }
 
